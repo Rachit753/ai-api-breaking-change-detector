@@ -2,17 +2,37 @@ const pool = require("../config/db");
 //const { get } = require("../routes/endpointRoutes");
 
 async function saveContract({ endpoint, method, schema }) {
-  const query = `
-    INSERT INTO contracts (endpoint, method, schema_json)
-    VALUES ($1, $2, $3)
+  // Get latest version
+  const latestQuery = `
+    SELECT version
+    FROM contracts
+    WHERE endpoint = $1 AND method = $2
+    ORDER BY version DESC
+    LIMIT 1;
+  `;
+
+  const latestResult = await pool.query(latestQuery, [endpoint, method]);
+
+  let newVersion = 1;
+
+  if (latestResult.rows.length > 0) {
+    newVersion = latestResult.rows[0].version + 1;
+  }
+console.log("🔥 NEW saveContract logic running");
+
+  // Insert new contract with incremented version
+  const insertQuery = `
+    INSERT INTO contracts (endpoint, method, schema_json, version)
+    VALUES ($1, $2, $3, $4)
     RETURNING *;
   `;
 
-  const values = [endpoint, method, schema];
-  const result = await pool.query(query, values);
+  const values = [endpoint, method, schema, newVersion];
 
+  const result = await pool.query(insertQuery, values);
   return result.rows[0];
 }
+
 
 async function getLatestContract(endpoint, method) {
   const query = `

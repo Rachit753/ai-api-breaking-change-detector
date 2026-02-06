@@ -13,13 +13,15 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("🚀 GuardAI API Contract Intelligence Server Running");
+  res.send("GuardAI API Contract Intelligence Server Running");
 });
 
 
 app.get("/health", (req, res) => {
   res.json({ status: "OK", message: "Server is running" });
 });
+
+app.use(trafficCapture);
 
 /* Test endpoint */
 app.post("/test-user", (req, res) => {
@@ -29,7 +31,6 @@ app.post("/test-user", (req, res) => {
   });
 });
 
-app.use(trafficCapture); // 👈 important
 
 app.use("/api/endpoints", endpointRoutes);
 app.use("/api/contracts", contractRoutes);

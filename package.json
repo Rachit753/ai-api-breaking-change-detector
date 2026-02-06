@@ -1,0 +1,26 @@
+{
+  "name": "ai-api-breaking-change-detector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+  "dev": "concurrently \"npm run dev --prefix backend\" \"npm start --prefix dashboard\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rachit753/ai-api-breaking-change-detector.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Rachit753/ai-api-breaking-change-detector/issues"
+  },
+  "homepage": "https://github.com/Rachit753/ai-api-breaking-change-detector#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

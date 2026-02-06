@@ -3,10 +3,7 @@ const router = express.Router();
 
 const { getAllEndpoints } = require("../models/contractModel");
 
-/**
- * GET /api/endpoints
- * Returns list of all monitored endpoints
- */
+
 router.get("/", async (req, res) => {
   try {
     const endpoints = await getAllEndpoints();

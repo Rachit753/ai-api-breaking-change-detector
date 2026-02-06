@@ -1,3 +1,4 @@
+const pool = require("../config/db");
 const { extractSchema } = require("../services/schemaExtractor");
 const { saveContract, getLatestContract } = require("../models/contractModel");
 const { compareSchemas } = require("../services/changeDetection");
@@ -8,6 +9,13 @@ async function trafficCapture(req, res, next) {
 
   res.send = async function (body) {
     try {
+      // Log every request for impact analysis
+      await pool.query(
+        "INSERT INTO request_logs (endpoint, method) VALUES ($1, $2)",
+        [req.originalUrl, req.method]
+      );
+
+      // Only process if request body exists
       if (req.body && Object.keys(req.body).length > 0) {
         const newSchema = extractSchema(req.body);
 
@@ -49,4 +57,3 @@ async function trafficCapture(req, res, next) {
 }
 
 module.exports = trafficCapture;
-

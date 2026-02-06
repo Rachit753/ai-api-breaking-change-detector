@@ -3,10 +3,6 @@ const router = express.Router();
 
 const { getContractsByEndpoint } = require("../models/contractModel");
 
-/**
- * GET /api/contracts?endpoint=/test-user&method=POST
- * Returns contract version history for an endpoint
- */
 router.get("/", async (req, res) => {
   try {
     const { endpoint, method } = req.query;
