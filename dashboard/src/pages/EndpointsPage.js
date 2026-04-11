@@ -3,7 +3,6 @@ import { fetchEndpoints } from "../api/endpoints";
 import ContractsPage from "./ContractsPage";
 import AlertsPage from "./AlertsPage";
 
-
 function EndpointsPage() {
   const [endpoints, setEndpoints] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,35 +26,41 @@ function EndpointsPage() {
   if (loading) return <p>Loading endpoints...</p>;
 
   return (
-    <div>
+    <div className="container">
+      <h1>GuardAI Developer Dashboard</h1>
+
       <h2>Monitored Endpoints</h2>
 
-      {endpoints.length === 0 ? (
-        <p>No endpoints found.</p>
-      ) : (
-        <ul>
-          {endpoints.map((ep, index) => (
-            <li
-              key={index}
-              style={{ cursor: "pointer", marginBottom: 8 }}
-              onClick={() => setSelected(ep)}
+      <div className="card">
+        {endpoints.length === 0 ? (
+          <p>No endpoints found.</p>
+        ) : (
+          endpoints.map((e, i) => (
+            <div
+              key={i}
+              className="endpoint-item"
+              onClick={() => setSelected(e)}
             >
-              <strong>{ep.method}</strong> — {ep.endpoint}
-            </li>
-          ))}
-        </ul>
-      )}
+              <strong>{e.method}</strong> — {e.endpoint}
+            </div>
+          ))
+        )}
+      </div>
 
-      {/* Show contracts when selected */}
       {selected && (
-  <>
-    <ContractsPage endpoint={selected.endpoint} method={selected.method} />
-    <AlertsPage endpoint={selected.endpoint} method={selected.method} />
-  </>
-)}
+        <>
+          <ContractsPage
+            endpoint={selected.endpoint}
+            method={selected.method}
+          />
+          <AlertsPage
+            endpoint={selected.endpoint}
+            method={selected.method}
+          />
+        </>
+      )}
     </div>
   );
 }
 
 export default EndpointsPage;
-

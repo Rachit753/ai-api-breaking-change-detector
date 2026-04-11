@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-  "dev": "concurrently \"npm run dev --prefix backend\" \"npm start --prefix dashboard\""
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm start --prefix dashboard\""
   },
   "repository": {
     "type": "git",
@@ -22,5 +22,8 @@
   "homepage": "https://github.com/Rachit753/ai-api-breaking-change-detector#readme",
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
   }
 }

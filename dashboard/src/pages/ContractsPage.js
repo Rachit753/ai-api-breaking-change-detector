@@ -24,32 +24,26 @@ function ContractsPage({ endpoint, method }) {
 
   return (
     <div style={{ marginTop: 20 }}>
-      <h3>
+      <h2>
         Contract History — {method} {endpoint}
-      </h3>
+      </h2>
 
       {contracts.length === 0 ? (
         <p>No contract versions found.</p>
       ) : (
-        <ul>
-          {contracts.map((c) => (
-            <li key={c.id} style={{ marginBottom: 10 }}>
-              <strong>Version {c.version}</strong>
-              <pre
-                style={{
-                  background: "#f4f4f4",
-                  padding: 10,
-                  overflowX: "auto",
-                }}
-              >
-                {JSON.stringify(c.schema_json, null, 2)}
-              </pre>
-            </li>
-          ))}
-        </ul>
+        contracts.map((c) => (
+          <div key={c.id} className="card" style={{ marginBottom: 12 }}>
+            <strong>Version {c.version}</strong>
+
+            <pre className="code-block">
+              {JSON.stringify(c.schema_json, null, 2)}
+            </pre>
+          </div>
+        ))
       )}
     </div>
   );
 }
 
 export default ContractsPage;
+
