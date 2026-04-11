@@ -3,48 +3,64 @@ const { extractSchema } = require("../services/schemaExtractor");
 const { saveContract, getLatestContract } = require("../models/contractModel");
 const { compareSchemas } = require("../services/changeDetection");
 const { storeAlerts } = require("../services/alertService");
+const { interceptResponse } = require("../services/responseInterceptor");
 
 async function trafficCapture(req, res, next) {
+  if (!req.originalUrl.startsWith("/test")) {
+    return next();
+  }
+  interceptResponse(res);
+
   const originalSend = res.send;
 
   res.send = async function (body) {
     try {
-      const { error } = await supabase.from("request_logs").insert([
-        {
-          endpoint: req.originalUrl,
-          method: req.method,
-        },
-      ]);
-      
-      if (error) {
-        console.error("Supabase insert error:", error.message);
+      const requestData = {
+        endpoint: req.originalUrl,
+        method: req.method,
+        request_body: req.body || null,
+        headers: req.headers || null,
+        status_code: res.statusCode,
+        response_body: body || null,
+      };
+
+      const { error: logError } = await supabase
+        .from("request_logs")
+        .insert([requestData]);
+
+      if (logError) {
+        console.error("Request log error:", logError.message);
       }
 
-      if (req.body && Object.keys(req.body).length > 0) {
-        const newSchema = extractSchema(req.body);
+      const requestSchema = extractSchema(req.body || {});
+      const responseSchema = extractSchema(body || {});
 
-        const latest = await getLatestContract(req.originalUrl, req.method);
+      const combinedSchema = {
+        request: requestSchema,
+        response: responseSchema,
+      };
 
-        if (!latest) {
+      const latest = await getLatestContract(req.originalUrl, req.method);
+
+      if (!latest) {
+        await saveContract({
+          endpoint: req.originalUrl,
+          method: req.method,
+          schema: combinedSchema,
+        });
+      } else {
+        const changes = compareSchemas(latest.schema_json, combinedSchema);
+
+        if (changes.length > 0) {
           await saveContract({
             endpoint: req.originalUrl,
             method: req.method,
-            schema: newSchema,
+            schema: combinedSchema,
           });
-        } else {
-          const changes = compareSchemas(latest.schema_json, newSchema);
 
-          if (changes.length > 0) {
-            await saveContract({
-              endpoint: req.originalUrl,
-              method: req.method,
-              schema: newSchema,
-            });
+          await storeAlerts(req.originalUrl, req.method, changes);
 
-            await storeAlerts(req.originalUrl, req.method, changes);
-
-            console.log("Alerts stored for schema change:", changes);
-          }
+          console.log("Schema changes detected:", changes);
         }
       }
     } catch (err) {

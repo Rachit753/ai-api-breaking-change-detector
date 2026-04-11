@@ -6,17 +6,26 @@ function getType(value) {
 
 function extractSchema(data) {
   if (typeof data !== "object" || data === null) {
-    return getType(data);
+    return {
+      type: getType(data),
+      required: true,
+    };
   }
 
   if (Array.isArray(data)) {
-    return data.length > 0 ? [extractSchema(data[0])] : ["any"];
+    return {
+      type: "array",
+      items: data.length > 0 ? extractSchema(data[0]) : { type: "any" },
+    };
   }
 
   const schema = {};
 
   for (const key in data) {
-    schema[key] = extractSchema(data[key]);
+    schema[key] = {
+      ...extractSchema(data[key]),
+      required: true,
+    };
   }
 
   return schema;
