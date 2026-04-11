@@ -4,11 +4,33 @@ const { saveContract, getLatestContract } = require("../models/contractModel");
 const { compareSchemas } = require("../services/changeDetection");
 const { storeAlerts } = require("../services/alertService");
 const { interceptResponse } = require("../services/responseInterceptor");
+const { mergeSchemas } = require("../services/schemaMerger");
+
+function cleanSchema(schema) {
+  if (!schema || typeof schema !== "object") return schema;
+
+  const cleaned = {};
+
+  for (const key in schema) {
+    const val = schema[key];
+
+    if (typeof val === "object") {
+      cleaned[key] = cleanSchema(val);
+
+      if (val.type) cleaned[key].type = val.type;
+      if (val.required !== undefined) cleaned[key].required = val.required;
+    }
+  }
+
+  return cleaned;
+}
 
 async function trafficCapture(req, res, next) {
+
   if (!req.originalUrl.startsWith("/test")) {
     return next();
   }
+
   interceptResponse(res);
 
   const originalSend = res.send;
@@ -35,31 +57,34 @@ async function trafficCapture(req, res, next) {
       const requestSchema = extractSchema(req.body || {});
       const responseSchema = extractSchema(body || {});
 
-      const combinedSchema = {
+      const rawSchema = {
         request: requestSchema,
         response: responseSchema,
       };
-
+      
       const latest = await getLatestContract(req.originalUrl, req.method);
 
       if (!latest) {
+        const cleaned = cleanSchema(rawSchema);
+
         await saveContract({
           endpoint: req.originalUrl,
           method: req.method,
-          schema: combinedSchema,
+          schema: cleaned,
         });
       } else {
-        const changes = compareSchemas(latest.schema_json, combinedSchema);
+        const changes = compareSchemas(latest.schema_json, rawSchema);
+
+        let mergedSchema = mergeSchemas(latest.schema_json, rawSchema);
+        mergedSchema = cleanSchema(mergedSchema);
 
         if (changes.length > 0) {
           await saveContract({
-            endpoint: req.originalUrl,
-            method: req.method,
-            schema: combinedSchema,
+          endpoint: req.originalUrl,
+          method: req.method,
+            schema: mergedSchema,
           });
-
           await storeAlerts(req.originalUrl, req.method, changes);
-
           console.log("Schema changes detected:", changes);
         }
       }

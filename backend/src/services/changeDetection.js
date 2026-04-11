@@ -4,14 +4,17 @@ function compareSchemas(oldSchema, newSchema, path = "") {
   const oldKeys = Object.keys(oldSchema || {});
   const newKeys = Object.keys(newSchema || {});
 
+
   for (const key of oldKeys) {
     const currentPath = path ? `${path}.${key}` : key;
 
     if (!(key in newSchema)) {
+      const wasRequired = oldSchema[key]?.required ?? true;
+
       changes.push({
         type: "REMOVED_FIELD",
         field: currentPath,
-        severity: "BREAKING",
+        severity: wasRequired ? "BREAKING" : "SAFE",
       });
       continue;
     }
@@ -27,7 +30,20 @@ function compareSchemas(oldSchema, newSchema, path = "") {
       });
     }
 
-    if (typeof oldVal === "object" && typeof newVal === "object") {
+    if (oldVal.required === true && newVal.required === false) {
+      changes.push({
+        type: "REQUIRED_TO_OPTIONAL",
+        field: currentPath,
+        severity: "RISKY",
+      });
+    }
+
+    if (
+      typeof oldVal === "object" &&
+      typeof newVal === "object" &&
+      !oldVal.type &&
+      !newVal.type
+    ) {
       changes.push(...compareSchemas(oldVal, newVal, currentPath));
     }
   }

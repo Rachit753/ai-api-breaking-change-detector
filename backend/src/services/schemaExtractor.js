@@ -8,7 +8,6 @@ function extractSchema(data) {
   if (typeof data !== "object" || data === null) {
     return {
       type: getType(data),
-      required: true,
     };
   }
 
@@ -22,10 +21,7 @@ function extractSchema(data) {
   const schema = {};
 
   for (const key in data) {
-    schema[key] = {
-      ...extractSchema(data[key]),
-      required: true,
-    };
+    schema[key] = extractSchema(data[key]);
   }
 
   return schema;
