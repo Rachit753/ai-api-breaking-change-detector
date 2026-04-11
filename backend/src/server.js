@@ -1,5 +1,6 @@
 require("dotenv").config();
 require("./config/db");
+require("./queue/worker");
 
 const app = require("./app");
 
