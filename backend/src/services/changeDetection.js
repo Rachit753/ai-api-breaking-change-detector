@@ -1,7 +1,10 @@
 function compareSchemas(oldSchema, newSchema, path = "") {
   const changes = [];
 
-  for (const key in oldSchema) {
+  const oldKeys = Object.keys(oldSchema || {});
+  const newKeys = Object.keys(newSchema || {});
+
+  for (const key of oldKeys) {
     const currentPath = path ? `${path}.${key}` : key;
 
     if (!(key in newSchema)) {
@@ -13,18 +16,23 @@ function compareSchemas(oldSchema, newSchema, path = "") {
       continue;
     }
 
-    if (typeof oldSchema[key] === "object" && typeof newSchema[key] === "object") {
-      changes.push(...compareSchemas(oldSchema[key], newSchema[key], currentPath));
-    } else if (oldSchema[key] !== newSchema[key]) {
+    const oldVal = oldSchema[key];
+    const newVal = newSchema[key];
+
+    if (oldVal.type && newVal.type && oldVal.type !== newVal.type) {
       changes.push({
         type: "TYPE_CHANGED",
         field: currentPath,
         severity: "BREAKING",
       });
     }
+
+    if (typeof oldVal === "object" && typeof newVal === "object") {
+      changes.push(...compareSchemas(oldVal, newVal, currentPath));
+    }
   }
 
-  for (const key in newSchema) {
+  for (const key of newKeys) {
     if (!(key in oldSchema)) {
       const currentPath = path ? `${path}.${key}` : key;
 
