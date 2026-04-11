@@ -1,19 +1,18 @@
-const pool = require("../config/db");
-
+const supabase = require("../config/db");
 
 async function estimateImpact(endpoint, method) {
-  const totalQuery = `
-    SELECT COUNT(*) FROM request_logs
-    WHERE endpoint = $1 AND method = $2
-    AND created_at > NOW() - INTERVAL '1 hour'
-  `;
+  const { data, error } = await supabase
+    .from("request_logs")
+    .select("*")
+    .eq("endpoint", endpoint)
+    .eq("method", method)
+    .gte("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
 
-  const result = await pool.query(totalQuery, [endpoint, method]);
-  const total = parseInt(result.rows[0].count, 10);
+  if (error) throw error;
 
+  const total = data.length;
   if (total === 0) return 0;
 
-  
   const estimated = Math.round(total * 0.7);
 
   return Math.round((estimated / total) * 100);

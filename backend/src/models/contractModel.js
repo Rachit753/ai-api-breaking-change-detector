@@ -1,79 +1,87 @@
-const pool = require("../config/db");
-//const { get } = require("../routes/endpointRoutes");
+const supabase = require("../config/db");
 
 async function saveContract({ endpoint, method, schema }) {
-  // Get latest version
-  const latestQuery = `
-    SELECT version
-    FROM contracts
-    WHERE endpoint = $1 AND method = $2
-    ORDER BY version DESC
-    LIMIT 1;
-  `;
-
-  const latestResult = await pool.query(latestQuery, [endpoint, method]);
+  const { data: latestData } = await supabase
+    .from("contracts")
+    .select("version")
+    .eq("endpoint", endpoint)
+    .eq("method", method)
+    .order("version", { ascending: false })
+    .limit(1);
 
   let newVersion = 1;
 
-  if (latestResult.rows.length > 0) {
-    newVersion = latestResult.rows[0].version + 1;
+  if (latestData && latestData.length > 0) {
+    newVersion = latestData[0].version + 1;
   }
-console.log("🔥 NEW saveContract logic running");
 
-  // Insert new contract with incremented version
-  const insertQuery = `
-    INSERT INTO contracts (endpoint, method, schema_json, version)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *;
-  `;
+  const { data, error } = await supabase
+    .from("contracts")
+    .insert([
+      {
+        endpoint,
+        method,
+        schema_json: schema,
+        version: newVersion,
+      },
+    ])
+    .select()
+    .single();
 
-  const values = [endpoint, method, schema, newVersion];
-
-  const result = await pool.query(insertQuery, values);
-  return result.rows[0];
+  if (error) throw error;
+  return data;
 }
 
-
 async function getLatestContract(endpoint, method) {
-  const query = `
-    SELECT * FROM contracts
-    WHERE endpoint = $1 AND method = $2
-    ORDER BY version DESC
-    LIMIT 1;
-  `;
+  const { data, error } = await supabase
+    .from("contracts")
+    .select("*")
+    .eq("endpoint", endpoint)
+    .eq("method", method)
+    .order("version", { ascending: false })
+    .limit(1)
+    .single();
 
-  const result = await pool.query(query, [endpoint, method]);
-  return result.rows[0];
+  if (error) return null;
+  return data;
 }
 
 async function getAllEndpoints() {
-  const query = `
-    SELECT DISTINCT endpoint, method
-    FROM contracts
-    ORDER BY endpoint;
-  `;
+  const { data, error } = await supabase
+    .from("contracts")
+    .select("endpoint, method");
 
-  const result = await pool.query(query);
-  return result.rows;
+  if (error) throw error;
+
+  const unique = [];
+  const seen = new Set();
+
+  for (const item of data) {
+    const key = `${item.endpoint}-${item.method}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(item);
+    }
+  }
+
+  return unique;
 }
 
 async function getContractsByEndpoint(endpoint, method) {
-  const query = `
-    SELECT *
-    FROM contracts
-    WHERE endpoint = $1 AND method = $2
-    ORDER BY version DESC;
-  `;
+  const { data, error } = await supabase
+    .from("contracts")
+    .select("*")
+    .eq("endpoint", endpoint)
+    .eq("method", method)
+    .order("version", { ascending: false });
 
-  const result = await pool.query(query, [endpoint, method]);
-  return result.rows;
+  if (error) throw error;
+  return data;
 }
 
-
-
-module.exports = { 
+module.exports = {
   saveContract,
-  getLatestContract, 
+  getLatestContract,
   getAllEndpoints,
   getContractsByEndpoint,
 };

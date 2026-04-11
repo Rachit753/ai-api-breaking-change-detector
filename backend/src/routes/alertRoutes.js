@@ -18,7 +18,6 @@ router.get("/", async (req, res) => {
 
     const alerts = await getAlertsByEndpoint(endpoint, method);
 
-    // Attach impact % to each alert
     const impact = await estimateImpact(endpoint, method);
 
     res.json({ alerts, impact });

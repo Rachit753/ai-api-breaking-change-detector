@@ -1,7 +1,6 @@
 function compareSchemas(oldSchema, newSchema, path = "") {
   const changes = [];
 
-  // Check removed or changed fields
   for (const key in oldSchema) {
     const currentPath = path ? `${path}.${key}` : key;
 
@@ -25,7 +24,6 @@ function compareSchemas(oldSchema, newSchema, path = "") {
     }
   }
 
-  // Check new fields
   for (const key in newSchema) {
     if (!(key in oldSchema)) {
       const currentPath = path ? `${path}.${key}` : key;

@@ -23,7 +23,6 @@ app.get("/health", (req, res) => {
 
 app.use(trafficCapture);
 
-/* Test endpoint */
 app.post("/test-user", (req, res) => {
   res.json({
     id: 1,
@@ -36,13 +35,10 @@ app.use("/api/endpoints", endpointRoutes);
 app.use("/api/contracts", contractRoutes);
 app.use("/api/alerts", alertRoutes);
 
-/*404 handler*/
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-
-/* Global error handler */
 const errorHandler = require("./middleware/errorHandler");
 
 app.use(errorHandler);

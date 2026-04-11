@@ -7,7 +7,6 @@ router.get("/", async (req, res) => {
   try {
     const { endpoint, method } = req.query;
 
-    // Basic validation
     if (!endpoint || !method) {
       return res
         .status(400)
