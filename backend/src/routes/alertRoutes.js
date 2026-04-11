@@ -18,7 +18,7 @@ router.get("/", async (req, res) => {
 
     const alerts = await getAlertsByEndpoint(endpoint, method);
 
-    const impact = await estimateImpact(endpoint, method);
+    const impact = await estimateImpact(endpoint, method, alerts);
 
     res.json({ alerts, impact });
   } catch (err) {
