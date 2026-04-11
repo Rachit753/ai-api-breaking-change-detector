@@ -6,6 +6,7 @@ const trafficCapture = require("./middleware/trafficCapture");
 const endpointRoutes = require("./routes/endpointRoutes");
 const contractRoutes = require("./routes/contractRoutes");
 const alertRoutes = require("./routes/alertRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.post("/test-user", (req, res) => {
 app.use("/api/endpoints", endpointRoutes);
 app.use("/api/contracts", contractRoutes);
 app.use("/api/alerts", alertRoutes);
+app.use("/api/auth", authRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
