@@ -61,7 +61,6 @@ function AnalyticsPage() {
         setInsights(insightsData);
 
         generateRecommendations(severityData, topEndpointsData);
-
       } catch (err) {
         console.error("Analytics load error:", err);
       }
@@ -129,11 +128,6 @@ function AnalyticsPage() {
                 background: "rgba(255,255,255,0.05)",
               }}
             >
-              <span style={{ marginRight: 8 }}>
-                {insight.includes("BREAKING")}
-                {insight.includes("unstable")}
-                {insight.includes("traffic")}
-              </span>
               {insight}
             </div>
           ))
@@ -165,11 +159,16 @@ function AnalyticsPage() {
       <div className="card">
         <h3>Traffic</h3>
         {traffic.length === 0 ? (
-          <p>No traffic data</p>
+          <p>No traffic data available for selected range</p>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={traffic}>
-              <XAxis dataKey="time" />
+              <XAxis
+                dataKey="time"
+                tickFormatter={(t) =>
+                  new Date(t).toLocaleTimeString()
+                }
+              />
               <YAxis allowDecimals={false} />
               <Tooltip />
               <Line type="monotone" dataKey="requests" stroke="#3b82f6" />
@@ -182,11 +181,16 @@ function AnalyticsPage() {
         <h3>Alert Trends</h3>
 
         {alerts.length === 0 ? (
-          <p>Not enough data to show trend</p>
+          <p>No traffic data available for selected range</p>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={alerts}>
-              <XAxis dataKey="time" />
+              <XAxis
+                dataKey="time"
+                tickFormatter={(t) =>
+                  new Date(t).toLocaleTimeString()
+                }
+              />
               <YAxis allowDecimals={false} />
               <Tooltip />
               <Line type="monotone" dataKey="alerts" stroke="#ef4444" />
@@ -198,7 +202,7 @@ function AnalyticsPage() {
       <div className="card">
         <h3>Severity Distribution</h3>
         {severity.every((s) => s.value === 0) ? (
-          <p>No alerts</p>
+          <p>No traffic data available for selected range</p>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
@@ -224,7 +228,7 @@ function AnalyticsPage() {
         <h3>Top Endpoints</h3>
 
         {topEndpoints.length === 0 ? (
-          <p>No endpoint data</p>
+          <p>No traffic data available for selected range</p>
         ) : topEndpoints.length === 1 ? (
           <div style={{ padding: "10px" }}>
             <strong>{topEndpoints[0].endpoint}</strong>
