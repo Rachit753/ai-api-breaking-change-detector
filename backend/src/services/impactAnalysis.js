@@ -1,60 +1,43 @@
 const supabase = require("../config/db");
 
-function hasField(obj, path) {
-  const parts = path.split(".");
-
-  let current = obj;
-
-  for (const part of parts) {
-    if (!current || !(part in current)) return false;
-    current = current[part];
-  }
-
-  return true;
-}
-
-async function estimateImpact(endpoint, method, changes) {
+async function estimateImpact(endpoint, method, alerts) {
   try {
+    if (!alerts || alerts.length === 0) {
+      return 0;
+    }
+
+    const breakingFields = alerts
+      .filter((a) => a.severity === "BREAKING")
+      .map((a) => a.field.replace("request.", ""));
+
+    if (breakingFields.length === 0) return 0;
 
     const { data, error } = await supabase
       .from("request_logs")
       .select("request_body")
       .eq("endpoint", endpoint)
-      .eq("method", method)
-      .gte("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
+      .eq("method", method);
 
-    if (error) {
-      console.error("Impact fetch error:", error.message);
-      return 0;
-    }
+    if (error) throw error;
 
-    if (!data || data.length === 0) return 0;
+    let affected = 0;
 
-    const total = data.length;
-
-    let affectedCount = 0;
-
-    for (const row of data) {
+    data.forEach((row) => {
       const body = row.request_body || {};
 
-      for (const change of changes) {
-
-        if (!change.field.startsWith("request.")) continue;
-
-        const fieldPath = change.field.replace("request.", "");
-
-        if (hasField(body, fieldPath)) {
-          affectedCount++;
+      for (const field of breakingFields) {
+        if (body[field] !== undefined) {
+          affected++;
           break;
         }
       }
-    }
+    });
 
-    const impact = Math.round((affectedCount / total) * 100);
+    const total = data.length || 1;
 
-    return impact;
+    return Math.round((affected / total) * 100);
   } catch (err) {
-    console.error("Impact analysis error:", err.message);
+    console.error("Impact calculation error:", err.message);
     return 0;
   }
 }

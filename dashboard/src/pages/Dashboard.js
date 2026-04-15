@@ -1,6 +1,8 @@
 import { useState } from "react";
 import EndpointsPage from "./EndpointsPage";
+import AnalyticsPage from "./AnalyticsPage";
 import { removeToken } from "../utils/auth";
+import DashboardStats from "../components/DashboardStats";
 
 function Dashboard() {
   const [active, setActive] = useState("endpoints");
@@ -12,16 +14,23 @@ function Dashboard() {
 
   return (
     <div className="app">
-
+      
       <div className="sidebar">
         <h2>GuardAI</h2>
 
-        <div className="nav-item" onClick={() => setActive("endpoints")}>
+        <div
+          className="nav-item"
+          onClick={() => setActive("endpoints")}
+        >
           Endpoints
         </div>
 
-        <div className="nav-item">Analytics (soon)</div>
-        <div className="nav-item">Settings (soon)</div>
+        <div
+          className="nav-item"
+          onClick={() => setActive("analytics")}
+        >
+          Analytics
+        </div>
 
         <div
           className="nav-item"
@@ -33,7 +42,11 @@ function Dashboard() {
       </div>
 
       <div className="main">
+
+        <DashboardStats totalEndpoints={1} totalAlerts={1} />
+
         {active === "endpoints" && <EndpointsPage />}
+        {active === "analytics" && <AnalyticsPage />}
       </div>
     </div>
   );
