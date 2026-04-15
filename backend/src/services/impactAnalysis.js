@@ -1,10 +1,15 @@
 const supabase = require("../config/db");
 
+function getNestedValue(obj, path) {
+  return path.split(".").reduce((acc, key) => {
+    if (!acc) return undefined;
+    return acc[key];
+  }, obj);
+}
+
 async function estimateImpact(endpoint, method, alerts) {
   try {
-    if (!alerts || alerts.length === 0) {
-      return 0;
-    }
+    if (!alerts || alerts.length === 0) return 0;
 
     const breakingFields = alerts
       .filter((a) => a.severity === "BREAKING")
@@ -22,16 +27,18 @@ async function estimateImpact(endpoint, method, alerts) {
 
     let affected = 0;
 
-    data.forEach((row) => {
+    for (const row of data) {
       const body = row.request_body || {};
 
       for (const field of breakingFields) {
-        if (body[field] !== undefined) {
+        const value = getNestedValue(body, field);
+
+        if (value !== undefined) {
           affected++;
           break;
         }
       }
-    });
+    }
 
     const total = data.length || 1;
 

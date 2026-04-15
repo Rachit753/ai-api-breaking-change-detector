@@ -181,7 +181,7 @@ function AnalyticsPage() {
       <div className="card">
         <h3>Alert Trends</h3>
 
-        {alerts.length < 3 ? (
+        {alerts.length === 0 ? (
           <p>Not enough data to show trend</p>
         ) : (
           <ResponsiveContainer width="100%" height={250}>

@@ -70,18 +70,23 @@ router.get("/alerts-trend", async (req, res) => {
     data.forEach((item) => {
       const date = new Date(item.created_at);
 
-      const key =
-        range === "7d"
-          ? `${date.getDate()}/${date.getMonth() + 1}`
-          : `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
+      let key;
+
+      if (range === "7d") {
+        key = `${date.getDate()}/${date.getMonth() + 1}`;
+      } else {
+        key = `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
+      }
 
       grouped[key] = (grouped[key] || 0) + 1;
     });
 
-    const result = Object.keys(grouped).map((time) => ({
+    let result = Object.keys(grouped).map((time) => ({
       time,
       alerts: grouped[time],
     }));
+
+    result.sort((a, b) => a.time.localeCompare(b.time));
 
     res.json(result);
   } catch (err) {

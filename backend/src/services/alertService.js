@@ -15,7 +15,9 @@ async function storeAlerts(endpoint, method, changes, userId) {
       user_id: userId,
     });
 
-    storedAlerts.push(alert);
+    if (alert) {
+      storedAlerts.push(alert);
+    }
   }
 
   return storedAlerts;

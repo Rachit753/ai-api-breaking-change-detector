@@ -1,9 +1,26 @@
 const supabase = require("../config/db");
 
 async function createAlert({ endpoint, method, change_type, field, severity, user_id }) {
+
+  const { data: existing } = await supabase
+    .from("alerts")
+    .select("id")
+    .eq("endpoint", endpoint)
+    .eq("method", method)
+    .eq("change_type", change_type)
+    .eq("field", field)
+    .eq("user_id", user_id)
+    .limit(1);
+
+  if (existing && existing.length > 0) {
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("alerts")
-    .insert([{ endpoint, method, change_type, field, severity, user_id }])
+    .insert([
+      { endpoint, method, change_type, field, severity, user_id }
+    ])
     .select()
     .single();
 

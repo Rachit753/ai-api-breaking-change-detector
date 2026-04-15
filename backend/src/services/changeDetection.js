@@ -4,7 +4,6 @@ function compareSchemas(oldSchema, newSchema, path = "") {
   const oldKeys = Object.keys(oldSchema || {});
   const newKeys = Object.keys(newSchema || {});
 
-
   for (const key of oldKeys) {
     const currentPath = path ? `${path}.${key}` : key;
 
@@ -35,6 +34,14 @@ function compareSchemas(oldSchema, newSchema, path = "") {
         type: "REQUIRED_TO_OPTIONAL",
         field: currentPath,
         severity: "RISKY",
+      });
+    }
+
+    if (oldVal.required === false && newVal.required === true) {
+      changes.push({
+        type: "OPTIONAL_TO_REQUIRED",
+        field: currentPath,
+        severity: "BREAKING",
       });
     }
 
