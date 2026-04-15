@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const supabase = require("../config/db");
+const { generateInsights } = require("../services/insightsService");
 
 router.get("/traffic", async (req, res) => {
   try {
@@ -70,23 +71,20 @@ router.get("/alerts-trend", async (req, res) => {
     data.forEach((item) => {
       const date = new Date(item.created_at);
 
-      let key;
-
-      if (range === "7d") {
-        key = `${date.getDate()}/${date.getMonth() + 1}`;
-      } else {
-        key = `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
-      }
+      const key =
+        range === "7d"
+          ? `${date.getDate()}/${date.getMonth() + 1}`
+          : `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
 
       grouped[key] = (grouped[key] || 0) + 1;
     });
 
-    let result = Object.keys(grouped).map((time) => ({
-      time,
-      alerts: grouped[time],
-    }));
-
-    result.sort((a, b) => a.time.localeCompare(b.time));
+    const result = Object.keys(grouped)
+      .map((time) => ({
+        time,
+        alerts: grouped[time],
+      }))
+      .sort((a, b) => a.time.localeCompare(b.time));
 
     res.json(result);
   } catch (err) {
@@ -164,50 +162,9 @@ router.get("/insights", async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const insights = [];
+    const result = await generateInsights(userId);
 
-    const { data: alerts } = await supabase
-      .from("alerts")
-      .select("*")
-      .eq("user_id", userId);
-
-    const { data: logs } = await supabase
-      .from("request_logs")
-      .select("*")
-      .eq("user_id", userId);
-
-    if (!alerts || !logs) {
-      return res.json([]);
-    }
-
-    const breaking = alerts.filter((a) => a.severity === "BREAKING").length;
-
-    if (breaking >= 3) {
-      insights.push("High number of BREAKING changes detected");
-    }
-
-    if (logs.length >= 10) {
-      insights.push("High API traffic detected recently");
-    }
-
-    const endpointCount = {};
-
-    alerts.forEach((a) => {
-      const key = `${a.endpoint}-${a.method}`;
-      endpointCount[key] = (endpointCount[key] || 0) + 1;
-    });
-
-    Object.keys(endpointCount).forEach((key) => {
-      if (endpointCount[key] >= 3) {
-        insights.push(`Endpoint ${key} is unstable`);
-      }
-    });
-
-    if (alerts.length === 0) {
-      insights.push("System stable — no breaking changes detected");
-    }
-
-    res.json(insights);
+    res.json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Insights failed" });

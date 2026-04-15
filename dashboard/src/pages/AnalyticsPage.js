@@ -32,14 +32,18 @@ function AnalyticsPage() {
   const [alerts, setAlerts] = useState([]);
   const [severity, setSeverity] = useState([]);
   const [topEndpoints, setTopEndpoints] = useState([]);
-  const [insights, setInsights] = useState([]);
-  const [range, setRange] = useState("24h");
 
+  const [insights, setInsights] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+
+  const [range, setRange] = useState("24h");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
+        setLoading(true);
+
         const [
           trafficData,
           alertTrendData,
@@ -54,50 +58,25 @@ function AnalyticsPage() {
           fetchInsights(),
         ]);
 
-        setTraffic(trafficData);
-        setAlerts(alertTrendData);
-        setSeverity(severityData);
-        setTopEndpoints(topEndpointsData);
-        setInsights(insightsData);
+        setTraffic(trafficData || []);
+        setAlerts(alertTrendData || []);
+        setSeverity(severityData || []);
+        setTopEndpoints(topEndpointsData || []);
 
-        generateRecommendations(severityData, topEndpointsData);
+        setInsights(insightsData?.insights || []);
+        setRecommendations(insightsData?.recommendations || []);
       } catch (err) {
         console.error("Analytics load error:", err);
+      } finally {
+        setLoading(false);
       }
     }
 
     loadData();
   }, [range]);
 
-  function generateRecommendations(severityData, endpointsData) {
-    const recs = [];
-
-    const breaking =
-      severityData.find((s) => s.name === "BREAKING")?.value || 0;
-
-    const risky =
-      severityData.find((s) => s.name === "RISKY")?.value || 0;
-
-    if (breaking > 2) {
-      recs.push("Avoid removing required fields — this breaks existing clients");
-      recs.push("Use API versioning before introducing breaking changes");
-    }
-
-    if (risky > 3) {
-      recs.push("Review risky changes — may cause partial client failures");
-    }
-
-    if (endpointsData.length > 0) {
-      recs.push(
-        `Stabilize high-traffic endpoint: ${endpointsData[0].endpoint}`
-      );
-    }
-
-    if (recs.length === 0) {
-      recs.push("Your API is stable — no major risks detected");
-    }
-
-    setRecommendations(recs);
+  if (loading) {
+    return <p>Loading analytics...</p>;
   }
 
   return (
@@ -119,15 +98,7 @@ function AnalyticsPage() {
           <p>No insights yet</p>
         ) : (
           insights.map((insight, i) => (
-            <div
-              key={i}
-              style={{
-                marginBottom: 10,
-                padding: "10px",
-                borderRadius: "8px",
-                background: "rgba(255,255,255,0.05)",
-              }}
-            >
+            <div key={i} className="impact">
               {insight}
             </div>
           ))
@@ -141,15 +112,7 @@ function AnalyticsPage() {
           <p>No recommendations</p>
         ) : (
           recommendations.map((rec, i) => (
-            <div
-              key={i}
-              style={{
-                marginBottom: 8,
-                padding: "8px",
-                borderRadius: "6px",
-                background: "rgba(255,255,255,0.05)",
-              }}
-            >
+            <div key={i} className="impact">
               {rec}
             </div>
           ))
@@ -159,19 +122,14 @@ function AnalyticsPage() {
       <div className="card">
         <h3>Traffic</h3>
         {traffic.length === 0 ? (
-          <p>No traffic data available for selected range</p>
+          <p>No traffic data</p>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={traffic}>
-              <XAxis
-                dataKey="time"
-                tickFormatter={(t) =>
-                  new Date(t).toLocaleTimeString()
-                }
-              />
+              <XAxis dataKey="time" />
               <YAxis allowDecimals={false} />
               <Tooltip />
-              <Line type="monotone" dataKey="requests" stroke="#3b82f6" />
+              <Line dataKey="requests" stroke="#3b82f6" />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -179,21 +137,15 @@ function AnalyticsPage() {
 
       <div className="card">
         <h3>Alert Trends</h3>
-
         {alerts.length === 0 ? (
-          <p>No traffic data available for selected range</p>
+          <p>No alert data</p>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={alerts}>
-              <XAxis
-                dataKey="time"
-                tickFormatter={(t) =>
-                  new Date(t).toLocaleTimeString()
-                }
-              />
+              <XAxis dataKey="time" />
               <YAxis allowDecimals={false} />
               <Tooltip />
-              <Line type="monotone" dataKey="alerts" stroke="#ef4444" />
+              <Line dataKey="alerts" stroke="#ef4444" />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -202,21 +154,13 @@ function AnalyticsPage() {
       <div className="card">
         <h3>Severity Distribution</h3>
         {severity.every((s) => s.value === 0) ? (
-          <p>No traffic data available for selected range</p>
+          <p>No alerts</p>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
-              <Pie
-                data={severity}
-                dataKey="value"
-                nameKey="name"
-                label={({ name, value }) => `${name}: ${value}`}
-              >
+              <Pie data={severity} dataKey="value" nameKey="name">
                 {severity.map((entry, index) => (
-                  <Cell
-                    key={index}
-                    fill={COLORS[entry.name] || "#8884d8"}
-                  />
+                  <Cell key={index} fill={COLORS[entry.name]} />
                 ))}
               </Pie>
             </PieChart>
@@ -226,19 +170,13 @@ function AnalyticsPage() {
 
       <div className="card">
         <h3>Top Endpoints</h3>
-
         {topEndpoints.length === 0 ? (
-          <p>No traffic data available for selected range</p>
-        ) : topEndpoints.length === 1 ? (
-          <div style={{ padding: "10px" }}>
-            <strong>{topEndpoints[0].endpoint}</strong>
-            <p>{topEndpoints[0].requests} requests</p>
-          </div>
+          <p>No endpoint data</p>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={topEndpoints}>
               <XAxis dataKey="endpoint" />
-              <YAxis allowDecimals={false} />
+              <YAxis />
               <Tooltip />
               <Bar dataKey="requests" fill="#3b82f6" />
             </BarChart>
