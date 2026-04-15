@@ -2,9 +2,25 @@ const supabase = require("../config/db");
 const { interceptResponse } = require("../services/responseInterceptor");
 const { schemaQueue } = require("../queue/queue");
 
+const IGNORED_ROUTES = process.env.IGNORED_ROUTES
+  ? process.env.IGNORED_ROUTES.split(",")
+  : ["/api/auth", "/api/analytics", "/health"];
+
+function safeParse(data) {
+  try {
+    return typeof data === "string" ? JSON.parse(data) : data;
+  } catch {
+    return data;
+  }
+}
+
 async function trafficCapture(req, res, next) {
 
-  if (!req.originalUrl.startsWith("/test")) {
+  const shouldIgnore = IGNORED_ROUTES.some((route) =>
+    req.originalUrl.startsWith(route)
+  );
+
+  if (shouldIgnore) {
     return next();
   }
 
@@ -15,13 +31,15 @@ async function trafficCapture(req, res, next) {
   res.send = async function (body) {
     try {
 
+      const parsedBody = safeParse(body);
+
       const requestData = {
         endpoint: req.originalUrl,
         method: req.method,
         request_body: req.body || null,
         headers: req.headers || null,
         status_code: res.statusCode,
-        response_body: body || null,
+        response_body: parsedBody,
         user_id: req.user?.userId || null,
       };
 
@@ -39,12 +57,14 @@ async function trafficCapture(req, res, next) {
           endpoint: req.originalUrl,
           method: req.method,
           requestBody: req.body,
-          responseBody: body,
+          responseBody: parsedBody,
           userId: req.user?.userId,
         },
         {
           jobId: `${req.originalUrl}-${req.method}-${Date.now()}`
-        });
+        }
+      );
+
     } catch (err) {
       console.error("Traffic capture error:", err.message);
     }

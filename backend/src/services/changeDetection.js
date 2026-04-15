@@ -8,7 +8,9 @@ function compareSchemas(oldSchema, newSchema, path = "") {
     const currentPath = path ? `${path}.${key}` : key;
 
     if (!(key in newSchema)) {
-      const wasRequired = oldSchema[key]?.required ?? true;
+      const wasRequired =
+        oldSchema[key]?.required === true ||
+        (oldSchema[key]?._meta && oldSchema[key]._meta.occurrences === oldSchema[key]._meta.total);
 
       changes.push({
         type: "REMOVED_FIELD",
