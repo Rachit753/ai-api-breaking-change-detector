@@ -41,6 +41,8 @@ const worker = new Worker(
     try {
       const { endpoint, method, requestBody, responseBody, userId } = job.data;
 
+      console.log(`Processing job ${job.id} → ${endpoint}`);
+
       const requestSchema = extractSchema(requestBody || {});
       const responseSchema = extractSchema(responseBody || {});
 
@@ -60,6 +62,8 @@ const worker = new Worker(
           schema: cleanedSchema,
           user_id: userId,
         });
+
+        console.log(`Initial contract saved → ${endpoint}`);
         return;
       }
 
@@ -83,8 +87,11 @@ const worker = new Worker(
 
         await storeAlerts(endpoint, method, changes, userId);
 
-        console.log("Worker detected changes:", changes);
+        console.log(`Changes detected → ${endpoint}`);
+      } else {
+        console.log(`No changes → ${endpoint}`);
       }
+
     } catch (err) {
       console.error("Worker job failed:", err.message);
       throw err;
@@ -96,12 +103,16 @@ const worker = new Worker(
   }
 );
 
+worker.on("completed", (job) => {
+  console.log(`Job completed: ${job.id}`);
+});
+
 worker.on("failed", (job, err) => {
   console.error(`Job failed (${job.id}):`, err.message);
 });
 
-worker.on("completed", (job) => {
-  console.log(`Job completed: ${job.id}`);
+worker.on("error", (err) => {
+  console.error("Worker error:", err.message);
 });
 
 console.log("Worker started...");

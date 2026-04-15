@@ -33,14 +33,18 @@ async function trafficCapture(req, res, next) {
         console.error("Request log error:", logError.message);
       }
 
-      await schemaQueue.add("process-schema", {
-        endpoint: req.originalUrl,
-        method: req.method,
-        requestBody: req.body,
-        responseBody: body,
-        userId: req.user?.userId,
-      });
-
+      await schemaQueue.add(
+        "process-schema",
+        {
+          endpoint: req.originalUrl,
+          method: req.method,
+          requestBody: req.body,
+          responseBody: body,
+          userId: req.user?.userId,
+        },
+        {
+          jobId: `${req.originalUrl}-${req.method}-${Date.now()}`
+        });
     } catch (err) {
       console.error("Traffic capture error:", err.message);
     }

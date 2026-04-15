@@ -19,4 +19,6 @@ const schemaQueue = new Queue("schema-processing", {
   },
 });
 
+console.log("Queue initialized");
+
 module.exports = { schemaQueue };
