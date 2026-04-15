@@ -1,7 +1,6 @@
 import axios from "axios";
 import { getToken } from "../utils/auth";
-
-const BASE_URL = "http://localhost:5000/api";
+import BASE_URL from "./config";
 
 export async function fetchContracts(endpoint, method) {
   const response = await axios.get(`${BASE_URL}/contracts`, {

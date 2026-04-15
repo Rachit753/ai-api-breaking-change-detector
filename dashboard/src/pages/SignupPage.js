@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import BASE_URL from "../api/config";
 
 function SignupPage({ onSwitch }) {
   const [email, setEmail] = useState("");
@@ -7,7 +8,7 @@ function SignupPage({ onSwitch }) {
 
   async function handleSignup() {
     try {
-      await axios.post("http://localhost:5000/api/auth/signup", {
+      await axios.post(`${BASE_URL}/auth/signup`, {
         email,
         password,
       });
@@ -15,6 +16,7 @@ function SignupPage({ onSwitch }) {
       alert("Signup successful");
       onSwitch();
     } catch (err) {
+      console.error(err);
       alert("Signup failed");
     }
   }

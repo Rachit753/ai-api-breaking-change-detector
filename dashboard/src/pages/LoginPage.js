@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { saveToken } from "../utils/auth";
+import BASE_URL from "../api/config";
 
 function LoginPage({ onLogin }) {
   const [isSignup, setIsSignup] = useState(false);
@@ -17,7 +18,7 @@ function LoginPage({ onLogin }) {
 
     try {
       if (isSignup) {
-        await axios.post("http://localhost:5000/api/auth/signup", {
+        await axios.post(`${BASE_URL}/auth/signup`, {
           email,
           password,
         });
@@ -25,7 +26,7 @@ function LoginPage({ onLogin }) {
         setMessage("Signup successful! Please login.");
         setIsSignup(false);
       } else {
-        const res = await axios.post("http://localhost:5000/api/auth/login", {
+        const res = await axios.post(`${BASE_URL}/auth/login`, {
           email,
           password,
         });
@@ -34,6 +35,7 @@ function LoginPage({ onLogin }) {
         onLogin();
       }
     } catch (err) {
+      console.error(err);
       setError("Invalid credentials or error occurred");
     }
   }
