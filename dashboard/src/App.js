@@ -1,6 +1,6 @@
 import { useState } from "react";
-import EndpointsPage from "./pages/EndpointsPage";
 import LoginPage from "./pages/LoginPage";
+import Dashboard from "./pages/Dashboard";
 import { getToken } from "./utils/auth";
 
 function App() {
@@ -10,7 +10,7 @@ function App() {
     return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
   }
 
-  return <EndpointsPage />;
+  return <Dashboard />;
 }
 
 export default App;

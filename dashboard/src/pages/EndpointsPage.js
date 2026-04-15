@@ -5,7 +5,6 @@ import AlertsPage from "./AlertsPage";
 
 function EndpointsPage() {
   const [endpoints, setEndpoints] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
@@ -14,37 +13,27 @@ function EndpointsPage() {
         const data = await fetchEndpoints();
         setEndpoints(data);
       } catch (err) {
-        console.error("Failed to load endpoints:", err);
-      } finally {
-        setLoading(false);
+        console.error(err);
       }
     }
 
     loadData();
   }, []);
 
-  if (loading) return <p>Loading endpoints...</p>;
-
   return (
-    <div className="container">
-      <h1>GuardAI Developer Dashboard</h1>
-
-      <h2>Monitored Endpoints</h2>
+    <div>
+      <h1>API Monitoring Dashboard</h1>
 
       <div className="card">
-        {endpoints.length === 0 ? (
-          <p>No endpoints found.</p>
-        ) : (
-          endpoints.map((e, i) => (
-            <div
-              key={i}
-              className="endpoint-item"
-              onClick={() => setSelected(e)}
-            >
-              <strong>{e.method}</strong> — {e.endpoint}
-            </div>
-          ))
-        )}
+        {endpoints.map((e, i) => (
+          <div
+            key={i}
+            className="endpoint-item"
+            onClick={() => setSelected(e)}
+          >
+            <strong>{e.method}</strong> — {e.endpoint}
+          </div>
+        ))}
       </div>
 
       {selected && (

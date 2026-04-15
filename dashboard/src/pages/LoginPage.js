@@ -8,19 +8,23 @@ function LoginPage({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
   async function handleSubmit() {
+    setError("");
+    setMessage("");
+
     try {
       if (isSignup) {
-      
         await axios.post("http://localhost:5000/api/auth/signup", {
           email,
           password,
         });
 
-        alert("Signup successful! Please login.");
+        setMessage("Signup successful! Please login.");
         setIsSignup(false);
       } else {
-        
         const res = await axios.post("http://localhost:5000/api/auth/login", {
           email,
           password,
@@ -30,13 +34,16 @@ function LoginPage({ onLogin }) {
         onLogin();
       }
     } catch (err) {
-      alert("Something went wrong");
+      setError("Invalid credentials or error occurred");
     }
   }
 
   return (
     <div style={{ padding: 40, maxWidth: 400, margin: "auto" }}>
       <h2>{isSignup ? "Signup" : "Login"}</h2>
+
+      {message && <p style={{ color: "#10b981" }}>{message}</p>}
+      {error && <p style={{ color: "#ef4444" }}>{error}</p>}
 
       <input
         placeholder="Email"
@@ -62,7 +69,11 @@ function LoginPage({ onLogin }) {
       </p>
 
       <button
-        onClick={() => setIsSignup(!isSignup)}
+        onClick={() => {
+          setIsSignup(!isSignup);
+          setMessage("");
+          setError("");
+        }}
         style={{
           width: "100%",
           background: "#eee",
