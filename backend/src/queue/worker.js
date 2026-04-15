@@ -18,13 +18,17 @@ function cleanSchema(schema) {
   const cleaned = {};
 
   for (const key in schema) {
+    if (key === "_meta") continue;
+
     const val = schema[key];
 
     if (typeof val === "object") {
-      cleaned[key] = cleanSchema(val);
+      const nested = cleanSchema(val);
 
-      if (val.type) cleaned[key].type = val.type;
-      if (val.required !== undefined) cleaned[key].required = val.required;
+      if (val.type) nested.type = val.type;
+      if (val.required !== undefined) nested.required = val.required;
+
+      cleaned[key] = nested;
     }
   }
 
@@ -62,7 +66,7 @@ const worker = new Worker(
       const changes = compareSchemas(
         latest.schema_json,
         cleanedSchema
-      ); 
+      );
 
       console.log("CHANGES:", changes);
 
