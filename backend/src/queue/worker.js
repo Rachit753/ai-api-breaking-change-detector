@@ -35,7 +35,7 @@ const worker = new Worker(
   "schema-processing",
   async (job) => {
     try {
-      const { endpoint, method, requestBody, responseBody } = job.data;
+      const { endpoint, method, requestBody, responseBody, userId } = job.data;
 
       const requestSchema = extractSchema(requestBody || {});
       const responseSchema = extractSchema(responseBody || {});
@@ -45,23 +45,28 @@ const worker = new Worker(
         response: responseSchema,
       };
 
-      const latest = await getLatestContract(endpoint, method);
+      const cleanedSchema = cleanSchema(rawSchema);
+
+      const latest = await getLatestContract(endpoint, method, userId);
 
       if (!latest) {
-        const cleaned = cleanSchema(rawSchema);
-
         await saveContract({
           endpoint,
           method,
-          schema: cleaned,
+          schema: cleanedSchema,
+          user_id: userId,
         });
-
         return;
       }
 
-      const changes = compareSchemas(latest.schema_json, rawSchema);
+      const changes = compareSchemas(
+        latest.schema_json,
+        cleanedSchema
+      ); 
 
-      let merged = mergeSchemas(latest.schema_json, rawSchema);
+      console.log("CHANGES:", changes);
+
+      let merged = mergeSchemas(latest.schema_json, cleanedSchema);
       merged = cleanSchema(merged);
 
       if (changes.length > 0) {
@@ -69,9 +74,10 @@ const worker = new Worker(
           endpoint,
           method,
           schema: merged,
+          user_id: userId,
         });
 
-        await storeAlerts(endpoint, method, changes);
+        await storeAlerts(endpoint, method, changes, userId);
 
         console.log("Worker detected changes:", changes);
       }

@@ -4,11 +4,10 @@ const router = express.Router();
 const { getAlertsByEndpoint } = require("../models/alertModel");
 const { estimateImpact } = require("../services/impactAnalysis");
 
-
-
 router.get("/", async (req, res) => {
   try {
     const { endpoint, method } = req.query;
+    const userId = req.user.userId;
 
     if (!endpoint || !method) {
       return res
@@ -16,7 +15,7 @@ router.get("/", async (req, res) => {
         .json({ error: "endpoint and method query params are required" });
     }
 
-    const alerts = await getAlertsByEndpoint(endpoint, method);
+    const alerts = await getAlertsByEndpoint(endpoint, method, userId);
 
     const impact = await estimateImpact(endpoint, method, alerts);
 
@@ -26,6 +25,5 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch alerts" });
   }
 });
-
 
 module.exports = router;

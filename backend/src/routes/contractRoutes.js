@@ -6,6 +6,7 @@ const { getContractsByEndpoint } = require("../models/contractModel");
 router.get("/", async (req, res) => {
   try {
     const { endpoint, method } = req.query;
+    const userId = req.user.userId;
 
     if (!endpoint || !method) {
       return res
@@ -13,7 +14,8 @@ router.get("/", async (req, res) => {
         .json({ error: "endpoint and method query params are required" });
     }
 
-    const contracts = await getContractsByEndpoint(endpoint, method);
+    const contracts = await getContractsByEndpoint(endpoint, method, userId);
+
     res.json(contracts);
   } catch (err) {
     console.error("Error fetching contracts:", err.message);

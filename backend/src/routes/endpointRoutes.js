@@ -3,10 +3,12 @@ const router = express.Router();
 
 const { getAllEndpoints } = require("../models/contractModel");
 
-
 router.get("/", async (req, res) => {
   try {
-    const endpoints = await getAllEndpoints();
+    const userId = req.user.userId;
+
+    const endpoints = await getAllEndpoints(userId);
+
     res.json(endpoints);
   } catch (err) {
     console.error("Error fetching endpoints:", err.message);

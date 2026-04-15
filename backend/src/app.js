@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 
 const trafficCapture = require("./middleware/trafficCapture");
+const authMiddleware = require("./auth/authMiddleware");
 
 const endpointRoutes = require("./routes/endpointRoutes");
 const contractRoutes = require("./routes/contractRoutes");
@@ -24,7 +25,7 @@ app.get("/health", (req, res) => {
 
 app.use(trafficCapture);
 
-app.post("/test-user", (req, res) => {
+app.post("/test-user", authMiddleware, (req, res) => {
   res.json({
     id: 1,
     ...req.body,
@@ -32,9 +33,9 @@ app.post("/test-user", (req, res) => {
 });
 
 
-app.use("/api/endpoints", endpointRoutes);
-app.use("/api/contracts", contractRoutes);
-app.use("/api/alerts", alertRoutes);
+app.use("/api/endpoints", authMiddleware, endpointRoutes);
+app.use("/api/contracts", authMiddleware, contractRoutes);
+app.use("/api/alerts", authMiddleware, alertRoutes);
 app.use("/api/auth", authRoutes);
 
 app.use((req, res) => {

@@ -1,6 +1,6 @@
 const supabase = require("../config/db");
 
-async function saveContract({ endpoint, method, schema }) {
+async function saveContract({ endpoint, method, schema, user_id }) {
   const { data: latestData } = await supabase
     .from("contracts")
     .select("version")
@@ -23,6 +23,7 @@ async function saveContract({ endpoint, method, schema }) {
         method,
         schema_json: schema,
         version: newVersion,
+        user_id
       },
     ])
     .select()
@@ -32,12 +33,13 @@ async function saveContract({ endpoint, method, schema }) {
   return data;
 }
 
-async function getLatestContract(endpoint, method) {
+async function getLatestContract(endpoint, method, user_id) {
   const { data, error } = await supabase
     .from("contracts")
     .select("*")
     .eq("endpoint", endpoint)
     .eq("method", method)
+    .eq("user_id", user_id)
     .order("version", { ascending: false })
     .limit(1)
     .single();
@@ -46,10 +48,11 @@ async function getLatestContract(endpoint, method) {
   return data;
 }
 
-async function getAllEndpoints() {
+async function getAllEndpoints(user_id) {
   const { data, error } = await supabase
     .from("contracts")
-    .select("endpoint, method");
+    .select("endpoint, method")
+    .eq("user_id", user_id);
 
   if (error) throw error;
 
@@ -67,12 +70,13 @@ async function getAllEndpoints() {
   return unique;
 }
 
-async function getContractsByEndpoint(endpoint, method) {
+async function getContractsByEndpoint(endpoint, method, user_id) {
   const { data, error } = await supabase
     .from("contracts")
     .select("*")
     .eq("endpoint", endpoint)
     .eq("method", method)
+    .eq("user_id", user_id)
     .order("version", { ascending: false });
 
   if (error) throw error;

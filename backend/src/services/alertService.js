@@ -1,7 +1,9 @@
 const { createAlert } = require("../models/alertModel");
 
-async function storeAlerts(endpoint, method, changes) {
+async function storeAlerts(endpoint, method, changes, userId) {
   const storedAlerts = [];
+
+  console.log("Saving alerts for user:", userId);
 
   for (const change of changes) {
     const alert = await createAlert({
@@ -10,6 +12,7 @@ async function storeAlerts(endpoint, method, changes) {
       change_type: change.type,
       field: change.field,
       severity: change.severity,
+      user_id: userId,
     });
 
     storedAlerts.push(alert);

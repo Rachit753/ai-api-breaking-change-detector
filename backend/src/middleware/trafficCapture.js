@@ -22,6 +22,7 @@ async function trafficCapture(req, res, next) {
         headers: req.headers || null,
         status_code: res.statusCode,
         response_body: body || null,
+        user_id: req.user?.userId || null,
       };
 
       const { error: logError } = await supabase
@@ -37,6 +38,7 @@ async function trafficCapture(req, res, next) {
         method: req.method,
         requestBody: req.body,
         responseBody: body,
+        userId: req.user?.userId,
       });
 
     } catch (err) {
