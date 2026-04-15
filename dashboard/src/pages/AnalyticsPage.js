@@ -4,6 +4,7 @@ import {
   fetchAlertTrend,
   fetchSeverity,
   fetchTopEndpoints,
+  fetchInsights,
 } from "../api/analytics";
 
 import {
@@ -31,31 +32,135 @@ function AnalyticsPage() {
   const [alerts, setAlerts] = useState([]);
   const [severity, setSeverity] = useState([]);
   const [topEndpoints, setTopEndpoints] = useState([]);
+  const [insights, setInsights] = useState([]);
   const [range, setRange] = useState("24h");
 
+  const [recommendations, setRecommendations] = useState([]);
+
   useEffect(() => {
-    async function load() {
+    async function loadData() {
       try {
-        setTraffic(await fetchTraffic(range));
-        setAlerts(await fetchAlertTrend(range));
-        setSeverity(await fetchSeverity(range));
-        setTopEndpoints(await fetchTopEndpoints(range));
+        const [
+          trafficData,
+          alertTrendData,
+          severityData,
+          topEndpointsData,
+          insightsData,
+        ] = await Promise.all([
+          fetchTraffic(range),
+          fetchAlertTrend(range),
+          fetchSeverity(range),
+          fetchTopEndpoints(range),
+          fetchInsights(),
+        ]);
+
+        setTraffic(trafficData);
+        setAlerts(alertTrendData);
+        setSeverity(severityData);
+        setTopEndpoints(topEndpointsData);
+        setInsights(insightsData);
+
+        generateRecommendations(severityData, topEndpointsData);
+
       } catch (err) {
         console.error("Analytics load error:", err);
       }
     }
-    load();
+
+    loadData();
   }, [range]);
+
+  function generateRecommendations(severityData, endpointsData) {
+    const recs = [];
+
+    const breaking =
+      severityData.find((s) => s.name === "BREAKING")?.value || 0;
+
+    const risky =
+      severityData.find((s) => s.name === "RISKY")?.value || 0;
+
+    if (breaking > 2) {
+      recs.push("Avoid removing required fields — this breaks existing clients");
+      recs.push("Use API versioning before introducing breaking changes");
+    }
+
+    if (risky > 3) {
+      recs.push("Review risky changes — may cause partial client failures");
+    }
+
+    if (endpointsData.length > 0) {
+      recs.push(
+        `Stabilize high-traffic endpoint: ${endpointsData[0].endpoint}`
+      );
+    }
+
+    if (recs.length === 0) {
+      recs.push("Your API is stable — no major risks detected");
+    }
+
+    setRecommendations(recs);
+  }
 
   return (
     <div>
       <h2>Analytics Dashboard</h2>
 
-      <select value={range} onChange={(e) => setRange(e.target.value)}>
-        <option value="1h">Last 1 Hour</option>
-        <option value="24h">Last 24 Hours</option>
-        <option value="7d">Last 7 Days</option>
-      </select>
+      <div style={{ marginBottom: 15 }}>
+        <select value={range} onChange={(e) => setRange(e.target.value)}>
+          <option value="1h">Last 1 Hour</option>
+          <option value="24h">Last 24 Hours</option>
+          <option value="7d">Last 7 Days</option>
+        </select>
+      </div>
+
+      <div className="card">
+        <h3>AI Insights</h3>
+
+        {insights.length === 0 ? (
+          <p>No insights yet</p>
+        ) : (
+          insights.map((insight, i) => (
+            <div
+              key={i}
+              style={{
+                marginBottom: 10,
+                padding: "10px",
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.05)",
+              }}
+            >
+              <span style={{ marginRight: 8 }}>
+                {insight.includes("BREAKING")}
+                {insight.includes("unstable")}
+                {insight.includes("traffic")}
+              </span>
+              {insight}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="card">
+        <h3>Recommendations</h3>
+
+        {recommendations.length === 0 ? (
+          <p>No recommendations</p>
+        ) : (
+          recommendations.map((rec, i) => (
+            <div
+              key={i}
+              style={{
+                marginBottom: 8,
+                padding: "8px",
+                borderRadius: "6px",
+                background: "rgba(255,255,255,0.05)",
+              }}
+            >
+              {rec}
+            </div>
+          ))
+        )}
+      </div>
 
       <div className="card">
         <h3>Traffic</h3>
@@ -75,8 +180,9 @@ function AnalyticsPage() {
 
       <div className="card">
         <h3>Alert Trends</h3>
-        {alerts.length === 0 ? (
-          <p>No alert data</p>
+
+        {alerts.length < 3 ? (
+          <p>Not enough data to show trend</p>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={alerts}>
@@ -116,8 +222,14 @@ function AnalyticsPage() {
 
       <div className="card">
         <h3>Top Endpoints</h3>
+
         {topEndpoints.length === 0 ? (
           <p>No endpoint data</p>
+        ) : topEndpoints.length === 1 ? (
+          <div style={{ padding: "10px" }}>
+            <strong>{topEndpoints[0].endpoint}</strong>
+            <p>{topEndpoints[0].requests} requests</p>
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={topEndpoints}>

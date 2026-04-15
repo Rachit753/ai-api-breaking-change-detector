@@ -34,3 +34,10 @@ export async function fetchTopEndpoints(range = "24h") {
   });
   return res.data;
 }
+
+export async function fetchInsights() {
+  const res = await axios.get(`${BASE_URL}/analytics/insights`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  return res.data;
+}
