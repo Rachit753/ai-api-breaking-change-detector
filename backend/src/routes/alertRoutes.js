@@ -8,6 +8,10 @@ router.get("/", async (req, res) => {
   try {
     const { endpoint, method } = req.query;
     const userId = req.user.userId;
+    const projectId = req.headers["x-project-id"];
+
+    if (!projectId) {
+      return res.status(400).json({ error: "Project ID missing" });}
 
     if (!endpoint || !method) {
       return res
@@ -15,7 +19,7 @@ router.get("/", async (req, res) => {
         .json({ error: "endpoint and method query params are required" });
     }
 
-    const alerts = await getAlertsByEndpoint(endpoint, method, userId);
+    const alerts = await getAlertsByEndpoint(endpoint, method, userId, projectId);
 
     const impact = await estimateImpact(endpoint, method, alerts);
 

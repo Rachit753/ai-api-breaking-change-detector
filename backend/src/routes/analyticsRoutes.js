@@ -6,7 +6,9 @@ const { generateInsights } = require("../services/insightsService");
 router.get("/traffic", async (req, res) => {
   try {
     const userId = req.user.userId;
-    const projectId = req.headers["x-project-id"]; // ✅ NEW
+    const projectId = req.headers["x-project-id"];
+    if (!projectId) {
+      return res.status(400).json({ error: "Project ID missing" });}
     const range = req.query.range || "24h";
 
     let fromTime = new Date();
@@ -53,6 +55,8 @@ router.get("/alerts-trend", async (req, res) => {
   try {
     const userId = req.user.userId;
     const projectId = req.headers["x-project-id"];
+    if (!projectId) {
+      return res.status(400).json({ error: "Project ID missing" });}
     const range = req.query.range || "24h";
 
     let fromTime = new Date();
@@ -101,6 +105,8 @@ router.get("/severity", async (req, res) => {
   try {
     const userId = req.user.userId;
     const projectId = req.headers["x-project-id"];
+    if (!projectId) {
+      return res.status(400).json({ error: "Project ID missing" });}
 
     const { data, error } = await supabase
       .from("alerts")
@@ -136,6 +142,8 @@ router.get("/top-endpoints", async (req, res) => {
   try {
     const userId = req.user.userId;
     const projectId = req.headers["x-project-id"];
+    if (!projectId) {
+      return res.status(400).json({ error: "Project ID missing" });}
 
     const { data, error } = await supabase
       .from("request_logs")
@@ -170,6 +178,8 @@ router.get("/insights", async (req, res) => {
   try {
     const userId = req.user.userId;
     const projectId = req.headers["x-project-id"];
+    if (!projectId) {
+      return res.status(400).json({ error: "Project ID missing" });}
 
     const result = await generateInsights(userId, projectId);
 

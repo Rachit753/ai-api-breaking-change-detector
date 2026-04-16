@@ -7,7 +7,11 @@ router.get("/", async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const endpoints = await getAllEndpoints(userId);
+    const projectId = req.headers["x-project-id"];
+    if (!projectId) {
+      return res.status(400).json({ error: "Project ID missing" });}
+
+    const endpoints = await getAllEndpoints(userId, projectId);
 
     res.json(endpoints);
   } catch (err) {
