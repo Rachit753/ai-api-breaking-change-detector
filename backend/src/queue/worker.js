@@ -39,7 +39,14 @@ const worker = new Worker(
   "schema-processing",
   async (job) => {
     try {
-      const { endpoint, method, requestBody, responseBody, userId } = job.data;
+      const {
+        endpoint,
+        method,
+        requestBody,
+        responseBody,
+        userId,
+        projectId,
+      } = job.data;
 
       console.log(`Processing job ${job.id} → ${endpoint}`);
 
@@ -53,7 +60,12 @@ const worker = new Worker(
 
       const cleanedSchema = cleanSchema(rawSchema);
 
-      const latest = await getLatestContract(endpoint, method, userId);
+      const latest = await getLatestContract(
+        endpoint,
+        method,
+        userId,
+        projectId
+      );
 
       if (!latest) {
         await saveContract({
@@ -61,6 +73,7 @@ const worker = new Worker(
           method,
           schema: cleanedSchema,
           user_id: userId,
+          project_id: projectId,
         });
 
         console.log(`Initial contract saved → ${endpoint}`);
@@ -83,9 +96,16 @@ const worker = new Worker(
           method,
           schema: merged,
           user_id: userId,
+          project_id: projectId,
         });
 
-        await storeAlerts(endpoint, method, changes, userId);
+        await storeAlerts(
+          endpoint,
+          method,
+          changes,
+          userId,
+          projectId
+        );
 
         console.log(`Changes detected → ${endpoint}`);
       } else {

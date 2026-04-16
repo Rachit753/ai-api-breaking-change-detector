@@ -1,7 +1,14 @@
 const supabase = require("../config/db");
 
-async function createAlert({ endpoint, method, change_type, field, severity, user_id }) {
-
+async function createAlert({
+  endpoint,
+  method,
+  change_type,
+  field,
+  severity,
+  user_id,
+  project_id,
+}) {
   const { data: existing } = await supabase
     .from("alerts")
     .select("id")
@@ -10,6 +17,7 @@ async function createAlert({ endpoint, method, change_type, field, severity, use
     .eq("change_type", change_type)
     .eq("field", field)
     .eq("user_id", user_id)
+    .eq("project_id", project_id) 
     .limit(1);
 
   if (existing && existing.length > 0) {
@@ -19,7 +27,15 @@ async function createAlert({ endpoint, method, change_type, field, severity, use
   const { data, error } = await supabase
     .from("alerts")
     .insert([
-      { endpoint, method, change_type, field, severity, user_id }
+      {
+        endpoint,
+        method,
+        change_type,
+        field,
+        severity,
+        user_id,
+        project_id,
+      },
     ])
     .select()
     .single();
@@ -28,13 +44,14 @@ async function createAlert({ endpoint, method, change_type, field, severity, use
   return data;
 }
 
-async function getAlertsByEndpoint(endpoint, method, user_id) {
+async function getAlertsByEndpoint(endpoint, method, user_id, project_id) {
   const { data, error } = await supabase
     .from("alerts")
     .select("*")
     .eq("endpoint", endpoint)
     .eq("method", method)
     .eq("user_id", user_id)
+    .eq("project_id", project_id)
     .order("created_at", { ascending: false });
 
   if (error) throw error;

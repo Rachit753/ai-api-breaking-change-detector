@@ -1,11 +1,13 @@
 const supabase = require("../config/db");
 
-async function saveContract({ endpoint, method, schema, user_id }) {
+async function saveContract({ endpoint, method, schema, user_id, project_id }) {
   const { data: latestData } = await supabase
     .from("contracts")
     .select("version")
     .eq("endpoint", endpoint)
     .eq("method", method)
+    .eq("user_id", user_id)
+    .eq("project_id", project_id)
     .order("version", { ascending: false })
     .limit(1);
 
@@ -23,7 +25,8 @@ async function saveContract({ endpoint, method, schema, user_id }) {
         method,
         schema_json: schema,
         version: newVersion,
-        user_id
+        user_id,
+        project_id,
       },
     ])
     .select()
@@ -33,13 +36,14 @@ async function saveContract({ endpoint, method, schema, user_id }) {
   return data;
 }
 
-async function getLatestContract(endpoint, method, user_id) {
+async function getLatestContract(endpoint, method, user_id, project_id) {
   const { data, error } = await supabase
     .from("contracts")
     .select("*")
     .eq("endpoint", endpoint)
     .eq("method", method)
     .eq("user_id", user_id)
+    .eq("project_id", project_id)
     .order("version", { ascending: false })
     .limit(1)
     .single();
@@ -48,11 +52,12 @@ async function getLatestContract(endpoint, method, user_id) {
   return data;
 }
 
-async function getAllEndpoints(user_id) {
+async function getAllEndpoints(user_id, project_id) {
   const { data, error } = await supabase
     .from("contracts")
     .select("endpoint, method")
-    .eq("user_id", user_id);
+    .eq("user_id", user_id)
+    .eq("project_id", project_id);
 
   if (error) throw error;
 
@@ -70,13 +75,14 @@ async function getAllEndpoints(user_id) {
   return unique;
 }
 
-async function getContractsByEndpoint(endpoint, method, user_id) {
+async function getContractsByEndpoint(endpoint, method, user_id, project_id) {
   const { data, error } = await supabase
     .from("contracts")
     .select("*")
     .eq("endpoint", endpoint)
     .eq("method", method)
     .eq("user_id", user_id)
+    .eq("project_id", project_id)
     .order("version", { ascending: false });
 
   if (error) throw error;

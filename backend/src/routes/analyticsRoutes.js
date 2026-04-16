@@ -6,6 +6,7 @@ const { generateInsights } = require("../services/insightsService");
 router.get("/traffic", async (req, res) => {
   try {
     const userId = req.user.userId;
+    const projectId = req.headers["x-project-id"]; // ✅ NEW
     const range = req.query.range || "24h";
 
     let fromTime = new Date();
@@ -18,6 +19,7 @@ router.get("/traffic", async (req, res) => {
       .from("request_logs")
       .select("created_at")
       .eq("user_id", userId)
+      .eq("project_id", projectId)
       .gte("created_at", fromTime.toISOString());
 
     if (error) throw error;
@@ -50,6 +52,7 @@ router.get("/traffic", async (req, res) => {
 router.get("/alerts-trend", async (req, res) => {
   try {
     const userId = req.user.userId;
+    const projectId = req.headers["x-project-id"];
     const range = req.query.range || "24h";
 
     let fromTime = new Date();
@@ -62,6 +65,7 @@ router.get("/alerts-trend", async (req, res) => {
       .from("alerts")
       .select("created_at")
       .eq("user_id", userId)
+      .eq("project_id", projectId)
       .gte("created_at", fromTime.toISOString());
 
     if (error) throw error;
@@ -96,11 +100,13 @@ router.get("/alerts-trend", async (req, res) => {
 router.get("/severity", async (req, res) => {
   try {
     const userId = req.user.userId;
+    const projectId = req.headers["x-project-id"];
 
     const { data, error } = await supabase
       .from("alerts")
       .select("severity")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("project_id", projectId);
 
     if (error) throw error;
 
@@ -129,11 +135,13 @@ router.get("/severity", async (req, res) => {
 router.get("/top-endpoints", async (req, res) => {
   try {
     const userId = req.user.userId;
+    const projectId = req.headers["x-project-id"];
 
     const { data, error } = await supabase
       .from("request_logs")
       .select("endpoint")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("project_id", projectId);
 
     if (error) throw error;
 
@@ -161,8 +169,9 @@ router.get("/top-endpoints", async (req, res) => {
 router.get("/insights", async (req, res) => {
   try {
     const userId = req.user.userId;
+    const projectId = req.headers["x-project-id"];
 
-    const result = await generateInsights(userId);
+    const result = await generateInsights(userId, projectId);
 
     res.json(result);
   } catch (err) {

@@ -15,7 +15,6 @@ function safeParse(data) {
 }
 
 async function trafficCapture(req, res, next) {
-
   const shouldIgnore = IGNORED_ROUTES.some((route) =>
     req.originalUrl.startsWith(route)
   );
@@ -30,8 +29,9 @@ async function trafficCapture(req, res, next) {
 
   res.send = async function (body) {
     try {
-
       const parsedBody = safeParse(body);
+
+      const projectId = req.headers["x-project-id"];
 
       const requestData = {
         endpoint: req.originalUrl,
@@ -41,6 +41,7 @@ async function trafficCapture(req, res, next) {
         status_code: res.statusCode,
         response_body: parsedBody,
         user_id: req.user?.userId || null,
+        project_id: projectId || null,
       };
 
       const { error: logError } = await supabase
@@ -59,9 +60,10 @@ async function trafficCapture(req, res, next) {
           requestBody: req.body,
           responseBody: parsedBody,
           userId: req.user?.userId,
+          projectId: projectId,
         },
         {
-          jobId: `${req.originalUrl}-${req.method}-${Date.now()}`
+          jobId: `${req.originalUrl}-${req.method}-${Date.now()}`,
         }
       );
 
