@@ -1,4 +1,8 @@
 const BASE_URL =
   process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
+export function getProjectId() {
+  return localStorage.getItem("projectId");
+}
+
 export default BASE_URL;

@@ -1,9 +1,10 @@
 import axios from "axios";
 import { getToken } from "../utils/auth";
-import BASE_URL from "./config";
+import BASE_URL, { getProjectId } from "./config";
 
 const authHeader = () => ({
   Authorization: `Bearer ${getToken()}`,
+  "x-project-id": getProjectId(),
 });
 
 export async function fetchTraffic(range = "24h") {

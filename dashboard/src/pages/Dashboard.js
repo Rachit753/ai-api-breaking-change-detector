@@ -5,6 +5,7 @@ import EndpointsPage from "./EndpointsPage";
 import AnalyticsPage from "./AnalyticsPage";
 import { removeToken } from "../utils/auth";
 import DashboardStats from "../components/DashboardStats";
+import ProjectSelector from "../components/ProjectSelector";
 
 function Dashboard() {
   const [active, setActive] = useState("endpoints");
@@ -71,6 +72,9 @@ function Dashboard() {
       </div>
 
       <div className="main">
+        
+        <ProjectSelector />
+
         {loading ? (
           <p>Loading dashboard...</p>
         ) : (
