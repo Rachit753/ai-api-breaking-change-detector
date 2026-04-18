@@ -4,7 +4,12 @@ const { schemaQueue } = require("../queue/queue");
 
 const IGNORED_ROUTES = process.env.IGNORED_ROUTES
   ? process.env.IGNORED_ROUTES.split(",")
-  : ["/api/auth", "/api/analytics", "/health"];
+  : [
+      "/api/auth",
+      "/api/analytics",
+      "/api/simulate",
+      "/health",
+    ];
 
 function safeParse(data) {
   try {
@@ -15,6 +20,11 @@ function safeParse(data) {
 }
 
 async function trafficCapture(req, res, next) {
+
+  if (req.headers["x-internal-call"] === "true") {
+    return next();
+  }
+
   const shouldIgnore = IGNORED_ROUTES.some((route) =>
     req.originalUrl.startsWith(route)
   );
@@ -30,16 +40,31 @@ async function trafficCapture(req, res, next) {
   res.send = async function (body) {
     try {
       const parsedBody = safeParse(body);
-
       const projectId = req.headers["x-project-id"];
 
+      let actualEndpoint =
+        req.headers["x-actual-endpoint"] ||
+        req.originalUrl;
+
+      actualEndpoint = actualEndpoint.replace(/^\/api/, "");
+
+      const cleanedRequestBody =
+        req.headers["x-actual-endpoint"] && req.body?.body
+          ? req.body.body
+          : req.body;
+
+      const cleanedResponseBody =
+        req.headers["x-actual-endpoint"] && parsedBody?.data
+          ? parsedBody.data
+          : parsedBody;
+
       const requestData = {
-        endpoint: req.originalUrl,
+        endpoint: actualEndpoint,
         method: req.method,
-        request_body: req.body || null,
+        request_body: cleanedRequestBody || null,
         headers: req.headers || null,
         status_code: res.statusCode,
-        response_body: parsedBody,
+        response_body: cleanedResponseBody,
         user_id: req.user?.userId || null,
         project_id: projectId || null,
       };
@@ -55,18 +80,17 @@ async function trafficCapture(req, res, next) {
       await schemaQueue.add(
         "process-schema",
         {
-          endpoint: req.originalUrl,
+          endpoint: actualEndpoint,
           method: req.method,
-          requestBody: req.body,
-          responseBody: parsedBody,
+          requestBody: cleanedRequestBody,
+          responseBody: cleanedResponseBody,
           userId: req.user?.userId,
           projectId: projectId,
         },
         {
-          jobId: `${req.originalUrl}-${req.method}-${Date.now()}`,
+          jobId: `${actualEndpoint}-${req.method}-${Date.now()}`,
         }
       );
-
     } catch (err) {
       console.error("Traffic capture error:", err.message);
     }

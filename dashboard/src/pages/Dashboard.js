@@ -3,6 +3,8 @@ import { fetchEndpoints } from "../api/endpoints";
 import { fetchAlerts } from "../api/alerts";
 import EndpointsPage from "./EndpointsPage";
 import AnalyticsPage from "./AnalyticsPage";
+import LogsPage from "./LogsPage";
+import SimulatorPage from "./SimulatorPage";
 import { removeToken } from "../utils/auth";
 import DashboardStats from "../components/DashboardStats";
 import ProjectSelector from "../components/ProjectSelector";
@@ -64,6 +66,20 @@ function Dashboard() {
 
         <div
           className="nav-item"
+          onClick={() => setActive("logs")}
+        >
+          Logs
+        </div>
+
+        <div
+          className="nav-item"
+          onClick={() => setActive("simulator")}
+        >
+          Simulator
+        </div>
+
+        <div
+          className="nav-item"
           style={{ marginTop: 20, color: "#ef4444" }}
           onClick={handleLogout}
         >
@@ -72,7 +88,6 @@ function Dashboard() {
       </div>
 
       <div className="main">
-        
         <ProjectSelector />
 
         {loading ? (
@@ -86,6 +101,8 @@ function Dashboard() {
 
         {active === "endpoints" && <EndpointsPage />}
         {active === "analytics" && <AnalyticsPage />}
+        {active === "logs" && <LogsPage />}
+        {active === "simulator" && <SimulatorPage />}
       </div>
     </div>
   );

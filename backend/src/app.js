@@ -10,6 +10,7 @@ const alertRoutes = require("./routes/alertRoutes");
 const authRoutes = require("./routes/authRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const simulatorRoutes = require("./routes/simulatorRoutes");
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use("/api/contracts", contractRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/simulate", authMiddleware, simulatorRoutes);
 
 app.post("/api/test-user", (req, res) => {
   res.json({
