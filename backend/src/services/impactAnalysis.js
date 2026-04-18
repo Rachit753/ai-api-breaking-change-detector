@@ -1,52 +1,60 @@
 const supabase = require("../config/db");
 
-function getNestedValue(obj, path) {
-  return path.split(".").reduce((acc, key) => {
-    if (!acc) return undefined;
-    return acc[key];
-  }, obj);
-}
-
-async function estimateImpact(endpoint, method, alerts) {
+async function calculateFieldImpact(endpoint, method, field, userId, projectId) {
   try {
-    if (!alerts || alerts.length === 0) return 0;
-
-    const breakingFields = alerts
-      .filter((a) => a.severity === "BREAKING")
-      .map((a) => a.field.replace("request.", ""));
-
-    if (breakingFields.length === 0) return 0;
-
-    const { data, error } = await supabase
+    const { data: logs } = await supabase
       .from("request_logs")
-      .select("request_body")
+      .select("id")
       .eq("endpoint", endpoint)
-      .eq("method", method);
+      .eq("method", method)
+      .eq("user_id", userId)
+      .eq("project_id", projectId);
 
-    if (error) throw error;
+    const total = logs?.length || 0;
+    if (total === 0) return 0;
 
-    let affected = 0;
+    const { data: usage } = await supabase
+      .from("field_usage")
+      .select("count")
+      .eq("endpoint", endpoint)
+      .eq("method", method)
+      .eq("field", field)
+      .eq("user_id", userId)
+      .eq("project_id", projectId)
+      .maybeSingle();
 
-    for (const row of data) {
-      const body = row.request_body || {};
+    const fieldCount = usage?.count || 0;
 
-      for (const field of breakingFields) {
-        const value = getNestedValue(body, field);
-
-        if (value !== undefined) {
-          affected++;
-          break;
-        }
-      }
-    }
-
-    const total = data.length || 1;
-
-    return Math.round((affected / total) * 100);
+    return Math.round((fieldCount / total) * 100);
   } catch (err) {
-    console.error("Impact calculation error:", err.message);
+    console.error("Impact calc error:", err.message);
     return 0;
   }
 }
 
-module.exports = { estimateImpact };
+async function estimateImpact(endpoint, method, alerts, userId, projectId) {
+  try {
+    if (!alerts || alerts.length === 0) return 0;
+
+    let maxImpact = 0;
+
+    for (const alert of alerts) {
+      const impact = await calculateFieldImpact(
+        endpoint,
+        method,
+        alert.field,
+        userId,
+        projectId
+      );
+
+      if (impact > maxImpact) maxImpact = impact;
+    }
+
+    return maxImpact;
+  } catch (err) {
+    console.error(err);
+    return 0;
+  }
+}
+
+module.exports = { estimateImpact, calculateFieldImpact };

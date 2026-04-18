@@ -45,3 +45,10 @@ export async function fetchInsights() {
   });
   return res.data;
 }
+
+export async function fetchFieldUsage() {
+  const res = await axios.get(`${BASE_URL}/analytics/field-usage`, {
+    headers: authHeader(),
+  });
+  return res.data;
+}

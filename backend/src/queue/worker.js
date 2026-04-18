@@ -6,6 +6,7 @@ const { mergeSchemas } = require("../services/schemaMerger");
 const { compareSchemas } = require("../services/changeDetection");
 const { storeAlerts } = require("../services/alertService");
 const { saveContract, getLatestContract } = require("../models/contractModel");
+const { trackFieldUsage } = require("../services/fieldTracking");
 
 const connection = new IORedis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -18,17 +19,12 @@ function cleanSchema(schema) {
   const cleaned = {};
 
   for (const key in schema) {
-    if (key === "_meta") continue;
-
     const val = schema[key];
 
     if (typeof val === "object") {
-      const nested = cleanSchema(val);
-
-      if (val.type) nested.type = val.type;
-      if (val.required !== undefined) nested.required = val.required;
-
-      cleaned[key] = nested;
+      cleaned[key] = cleanSchema(val);
+    } else {
+      cleaned[key] = val;
     }
   }
 
@@ -59,6 +55,14 @@ const worker = new Worker(
       };
 
       const cleanedSchema = cleanSchema(rawSchema);
+
+      await trackFieldUsage(
+        endpoint,
+        method,
+        { request: requestBody, response: responseBody },
+        userId,
+        projectId
+      );
 
       const latest = await getLatestContract(
         endpoint,

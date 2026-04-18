@@ -1,6 +1,6 @@
 const supabase = require("../config/db");
 
-async function generateInsights(userId) {
+async function generateInsights(userId, projectId) {
   try {
     const insights = [];
     const recommendations = [];
@@ -8,12 +8,14 @@ async function generateInsights(userId) {
     const { data: alerts } = await supabase
       .from("alerts")
       .select("*")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("project_id", projectId);
 
     const { data: logs } = await supabase
       .from("request_logs")
       .select("endpoint, method")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("project_id", projectId);
 
     if (!alerts || alerts.length === 0) {
       return {

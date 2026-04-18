@@ -5,6 +5,7 @@ import {
   fetchSeverity,
   fetchTopEndpoints,
   fetchInsights,
+  fetchFieldUsage,
 } from "../api/analytics";
 
 import {
@@ -36,6 +37,8 @@ function AnalyticsPage() {
   const [insights, setInsights] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
 
+  const [fieldUsage, setFieldUsage] = useState([]);
+
   const [range, setRange] = useState("24h");
   const [loading, setLoading] = useState(true);
 
@@ -50,12 +53,14 @@ function AnalyticsPage() {
           severityData,
           topEndpointsData,
           insightsData,
+          fieldUsageData,
         ] = await Promise.all([
           fetchTraffic(range),
           fetchAlertTrend(range),
           fetchSeverity(range),
           fetchTopEndpoints(range),
           fetchInsights(),
+          fetchFieldUsage(),
         ]);
 
         setTraffic(trafficData || []);
@@ -65,6 +70,8 @@ function AnalyticsPage() {
 
         setInsights(insightsData?.insights || []);
         setRecommendations(insightsData?.recommendations || []);
+
+        setFieldUsage(fieldUsageData || []);
       } catch (err) {
         console.error("Analytics load error:", err);
       } finally {
@@ -179,6 +186,23 @@ function AnalyticsPage() {
               <YAxis />
               <Tooltip />
               <Bar dataKey="requests" fill="#3b82f6" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      <div className="card">
+        <h3>Field Usage</h3>
+
+        {fieldUsage.length === 0 ? (
+          <p>No field usage data</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={fieldUsage}>
+              <XAxis dataKey="field" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="count" fill="#22c55e" />
             </BarChart>
           </ResponsiveContainer>
         )}

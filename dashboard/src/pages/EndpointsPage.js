@@ -7,7 +7,7 @@ function groupAlerts(alerts) {
   const map = {};
 
   alerts.forEach((a) => {
-    const key = `${a.change_type}-${a.field}`;
+    const key = `${a.change_type}-${a.field} (${a.impact}%)`;
 
     if (!map[key]) {
       map[key] = { ...a, count: 1 };

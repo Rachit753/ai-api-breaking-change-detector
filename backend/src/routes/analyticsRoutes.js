@@ -7,8 +7,11 @@ router.get("/traffic", async (req, res) => {
   try {
     const userId = req.user.userId;
     const projectId = req.headers["x-project-id"];
+
     if (!projectId) {
-      return res.status(400).json({ error: "Project ID missing" });}
+      return res.status(400).json({ error: "Project ID missing" });
+    }
+
     const range = req.query.range || "24h";
 
     let fromTime = new Date();
@@ -55,8 +58,11 @@ router.get("/alerts-trend", async (req, res) => {
   try {
     const userId = req.user.userId;
     const projectId = req.headers["x-project-id"];
+
     if (!projectId) {
-      return res.status(400).json({ error: "Project ID missing" });}
+      return res.status(400).json({ error: "Project ID missing" });
+    }
+
     const range = req.query.range || "24h";
 
     let fromTime = new Date();
@@ -105,8 +111,10 @@ router.get("/severity", async (req, res) => {
   try {
     const userId = req.user.userId;
     const projectId = req.headers["x-project-id"];
+
     if (!projectId) {
-      return res.status(400).json({ error: "Project ID missing" });}
+      return res.status(400).json({ error: "Project ID missing" });
+    }
 
     const { data, error } = await supabase
       .from("alerts")
@@ -142,8 +150,10 @@ router.get("/top-endpoints", async (req, res) => {
   try {
     const userId = req.user.userId;
     const projectId = req.headers["x-project-id"];
+
     if (!projectId) {
-      return res.status(400).json({ error: "Project ID missing" });}
+      return res.status(400).json({ error: "Project ID missing" });
+    }
 
     const { data, error } = await supabase
       .from("request_logs")
@@ -178,8 +188,10 @@ router.get("/insights", async (req, res) => {
   try {
     const userId = req.user.userId;
     const projectId = req.headers["x-project-id"];
+
     if (!projectId) {
-      return res.status(400).json({ error: "Project ID missing" });}
+      return res.status(400).json({ error: "Project ID missing" });
+    }
 
     const result = await generateInsights(userId, projectId);
 
@@ -187,6 +199,47 @@ router.get("/insights", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Insights failed" });
+  }
+});
+
+router.get("/field-usage", async (req, res) => {
+  try {
+    const projectId = req.headers["x-project-id"];
+
+    if (!projectId) {
+      return res.status(400).json({ error: "Missing project ID" });
+    }
+
+    const { data, error } = await supabase
+      .from("field_usage")
+      .select("field, count")
+      .eq("project_id", projectId);
+
+    if (error) throw error;
+
+    const map = {};
+
+    data.forEach((row) => {
+      const cleanField = row.field
+        .replace("request.", "")
+        .replace("response.", "");
+
+      if (!map[cleanField]) {
+        map[cleanField] = 0;
+      }
+
+      map[cleanField] += row.count;
+    });
+
+    const result = Object.entries(map).map(([field, count]) => ({
+      field,
+      count,
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error("Field usage error:", err);
+    res.status(500).json({ error: "Failed to fetch field usage" });
   }
 });
 
