@@ -1,6 +1,6 @@
 const supabase = require("../config/db");
 
-async function createAlert({
+async function createOrUpdateAlert({
   endpoint,
   method,
   change_type,
@@ -11,17 +11,27 @@ async function createAlert({
 }) {
   const { data: existing } = await supabase
     .from("alerts")
-    .select("id")
+    .select("id, occurrence_count")
     .eq("endpoint", endpoint)
     .eq("method", method)
     .eq("change_type", change_type)
     .eq("field", field)
     .eq("user_id", user_id)
-    .eq("project_id", project_id) 
-    .limit(1);
+    .eq("project_id", project_id)
+    .maybeSingle();
 
-  if (existing && existing.length > 0) {
-    return null;
+  if (existing) {
+    const { data, error } = await supabase
+      .from("alerts")
+      .update({
+        occurrence_count: existing.occurrence_count + 1,
+      })
+      .eq("id", existing.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   }
 
   const { data, error } = await supabase
@@ -35,6 +45,7 @@ async function createAlert({
         severity,
         user_id,
         project_id,
+        occurrence_count: 1,
       },
     ])
     .select()
@@ -58,4 +69,4 @@ async function getAlertsByEndpoint(endpoint, method, user_id, project_id) {
   return data;
 }
 
-module.exports = { createAlert, getAlertsByEndpoint };
+module.exports = { createOrUpdateAlert, getAlertsByEndpoint };

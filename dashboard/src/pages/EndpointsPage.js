@@ -3,22 +3,6 @@ import { fetchEndpoints } from "../api/endpoints";
 import { fetchContracts } from "../api/contracts";
 import { fetchAlerts } from "../api/alerts";
 
-function groupAlerts(alerts) {
-  const map = {};
-
-  alerts.forEach((a) => {
-    const key = `${a.change_type}-${a.field} (${a.impact}%)`;
-
-    if (!map[key]) {
-      map[key] = { ...a, count: 1 };
-    } else {
-      map[key].count++;
-    }
-  });
-
-  return Object.values(map);
-}
-
 function EndpointsPage() {
   const [endpoints, setEndpoints] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -104,7 +88,7 @@ function EndpointsPage() {
 
       {filteredEndpoints.map((ep, i) => (
         <div
-          key={i}
+          key={`${ep.endpoint}-${ep.method}`}
           className="endpoint-item"
           onClick={() => handleSelect(ep.endpoint, ep.method)}
         >
@@ -135,16 +119,21 @@ function EndpointsPage() {
             </div>
           )}
 
-          {groupAlerts(filteredAlerts).map((a) => (
-            <div key={a.field} className="card">
+          {filteredAlerts.map((a) => (
+            <div
+              key={`${a.change_type}-${a.field}`}
+              className="card"
+            >
               {a.change_type} — {a.field}
 
               <span className={`badge ${a.severity.toLowerCase()}`}>
                 {a.severity}
               </span>
 
-              {a.count > 1 && (
-                <span style={{ marginLeft: 10 }}>×{a.count}</span>
+              {a.occurrence_count > 1 && (
+                <span style={{ marginLeft: 10 }}>
+                  ×{a.occurrence_count}
+                </span>
               )}
             </div>
           ))}

@@ -20,16 +20,47 @@ router.get("/", async (req, res) => {
       });
     }
 
-    const alerts = await getAlertsByEndpoint(endpoint, method, userId, projectId);
+    const alerts = await getAlertsByEndpoint(
+      endpoint,
+      method,
+      userId,
+      projectId
+    );
 
-    const impact = await estimateImpact(endpoint, method, alerts, userId, projectId);
+    const groupedMap = {};
+
+    for (const a of alerts) {
+      const key = `${a.change_type}-${a.field}`;
+
+      if (!groupedMap[key]) {
+        groupedMap[key] = {
+          ...a,
+          occurrence_count: a.occurrence_count || 1,
+        };
+      } else {
+        groupedMap[key].occurrence_count +=
+          a.occurrence_count || 1;
+      }
+    }
+
+    const groupedAlerts = Object.values(groupedMap);
+
+    const impact = await estimateImpact(
+      endpoint,
+      method,
+      groupedAlerts,
+      userId,
+      projectId
+    );
 
     const alertsWithImpact = await Promise.all(
-      alerts.map(async (a) => {
+      groupedAlerts.map(async (a) => {
+        const field = a.field.replace("request.", "");
+
         const fieldImpact = await calculateFieldImpact(
           endpoint,
           method,
-          a.field,
+          field,
           userId,
           projectId
         );
@@ -50,5 +81,4 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch alerts" });
   }
 });
-
 module.exports = router;
