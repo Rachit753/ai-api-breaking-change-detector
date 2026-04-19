@@ -2,28 +2,31 @@ const express = require("express");
 const router = express.Router();
 
 const { getContractsByEndpoint } = require("../models/contractModel");
+const asyncHandler = require("../utils/asyncHandler");
 
-router.get("/", async (req, res) => {
-  try {
-    const { endpoint, method } = req.query;
-    const userId = req.user.userId;
-    const projectId = req.headers["x-project-id"];
-    if (!projectId) {
-      return res.status(400).json({ error: "Project ID missing" });}
+router.get("/", asyncHandler(async (req, res) => {
+  const { endpoint, method } = req.query;
+  const userId = req.user.userId;
+  const projectId = req.headers["x-project-id"];
 
-    if (!endpoint || !method) {
-      return res
-        .status(400)
-        .json({ error: "endpoint and method query params are required" });
-    }
-
-    const contracts = await getContractsByEndpoint(endpoint, method, userId, projectId);
-
-    res.json(contracts);
-  } catch (err) {
-    console.error("Error fetching contracts:", err.message);
-    res.status(500).json({ error: "Failed to fetch contracts" });
+  if (!projectId) {
+    return res.status(400).json({ error: "Project ID missing" });
   }
-});
+
+  if (!endpoint || !method) {
+    return res.status(400).json({
+      error: "endpoint and method query params are required",
+    });
+  }
+
+  const contracts = await getContractsByEndpoint(
+    endpoint,
+    method,
+    userId,
+    projectId
+  );
+
+  res.json(contracts);
+}));
 
 module.exports = router;

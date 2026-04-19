@@ -13,7 +13,10 @@ function mergeSchemas(oldSchema = {}, newSchema = {}) {
     if (!oldVal && newVal) {
       merged[key] = {
         ...newVal,
-        _meta: { occurrences: 1, total: 1 },
+        _meta: {
+          occurrences: 1,
+          total: 1,
+        },
         required: true,
       };
       continue;
@@ -25,7 +28,10 @@ function mergeSchemas(oldSchema = {}, newSchema = {}) {
 
       merged[key] = {
         ...oldVal,
-        _meta: { occurrences: occ, total },
+        _meta: {
+          occurrences: occ,
+          total,
+        },
         required: false,
       };
       continue;
@@ -35,19 +41,64 @@ function mergeSchemas(oldSchema = {}, newSchema = {}) {
       const occ = (oldVal._meta?.occurrences || 1) + 1;
       const total = (oldVal._meta?.total || 1) + 1;
 
-      merged[key] = {
+      const typeChanged = oldVal.type !== newVal.type;
+
+      let mergedField = {
         ...newVal,
-        _meta: { occurrences: occ, total },
+        type: typeChanged ? "any" : newVal.type,
+        _meta: {
+          occurrences: occ,
+          total,
+        },
         required: occ === total,
       };
 
-      if (typeof newVal === "object" && !newVal.type) {
-        merged[key] = mergeSchemas(oldVal, newVal);
+      if (newVal.type === "object") {
+        mergedField.children = mergeSchemas(
+          oldVal.children || {},
+          newVal.children || {}
+        );
       }
+
+      if (newVal.type === "array") {
+        mergedField.items = mergeArrayItems(
+          oldVal.items,
+          newVal.items
+        );
+      }
+
+      merged[key] = mergedField;
     }
   }
 
   return merged;
+}
+
+function mergeArrayItems(oldItems = {}, newItems = {}) {
+  
+  if (!oldItems || !newItems) {
+    return { type: "any" };
+  }
+
+  if (!oldItems.children && !newItems.children) {
+    if (oldItems.type !== newItems.type) {
+      return { type: "any" };
+    }
+
+    return { type: newItems.type };
+  }
+
+  if (!!oldItems.children !== !!newItems.children) {
+    return { type: "any" };
+  }
+
+  return {
+    type: "object",
+    children: mergeSchemas(
+      oldItems.children || {},
+      newItems.children || {}
+    ),
+  };
 }
 
 module.exports = { mergeSchemas };

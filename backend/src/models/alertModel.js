@@ -21,10 +21,12 @@ async function createOrUpdateAlert({
     .maybeSingle();
 
   if (existing) {
+
     const { data, error } = await supabase
       .from("alerts")
       .update({
         occurrence_count: existing.occurrence_count + 1,
+        severity,
       })
       .eq("id", existing.id)
       .select()

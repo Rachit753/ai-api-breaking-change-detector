@@ -1,84 +1,64 @@
 function compareSchemas(oldSchema, newSchema, path = "") {
   const changes = [];
 
-  const buildPath = (base, key) => (base ? `${base}.${key}` : key);
+  if (!oldSchema || !newSchema) return changes;
 
-  const oldKeys = Object.keys(oldSchema || {});
-  const newKeys = Object.keys(newSchema || {});
+  const oldChildren = oldSchema.children || {};
+  const newChildren = newSchema.children || {};
 
-  for (const key of oldKeys) {
-    const currentPath = buildPath(path, key);
+  const allKeys = new Set([
+    ...Object.keys(oldChildren),
+    ...Object.keys(newChildren),
+  ]);
 
-    if (!(key in newSchema)) {
+  for (const key of allKeys) {
+    const fullPath = path ? `${path}.${key}` : key;
+
+    const oldField = oldChildren[key];
+    const newField = newChildren[key];
+
+    if (oldField && !newField) {
       changes.push({
-        type: "REMOVED_FIELD",
-        field: currentPath,
+        change_type: "REMOVED_FIELD",
+        field: fullPath,
         severity: "BREAKING",
       });
       continue;
     }
 
-    const oldVal = oldSchema[key];
-    const newVal = newSchema[key];
-
-    if (oldVal?.type && newVal?.type && oldVal.type !== newVal.type) {
+    if (!oldField && newField) {
       changes.push({
-        type: "TYPE_CHANGED",
-        field: currentPath,
-        severity: "BREAKING",
-      });
-    }
-
-    if (oldVal?.required === true && newVal?.required === false) {
-      changes.push({
-        type: "REQUIRED_TO_OPTIONAL",
-        field: currentPath,
-        severity: "RISKY",
-      });
-    }
-
-    if (oldVal?.required === false && newVal?.required === true) {
-      changes.push({
-        type: "OPTIONAL_TO_REQUIRED",
-        field: currentPath,
-        severity: "BREAKING",
-      });
-    }
-
-    if (oldVal?.type === "array" && newVal?.type === "array") {
-      const oldItems = oldVal.items || {};
-      const newItems = newVal.items || {};
-
-      changes.push(
-        ...compareSchemas(
-          oldItems,
-          newItems,
-          `${currentPath}[]`
-        )
-      );
-    }
-
-    if (
-      typeof oldVal === "object" &&
-      typeof newVal === "object" &&
-      !oldVal.type &&
-      !newVal.type
-    ) {
-      changes.push(
-        ...compareSchemas(oldVal, newVal, currentPath)
-      );
-    }
-  }
-
-  for (const key of newKeys) {
-    if (!(key in oldSchema)) {
-      const currentPath = buildPath(path, key);
-
-      changes.push({
-        type: "NEW_FIELD",
-        field: currentPath,
+        change_type: "NEW_FIELD",
+        field: fullPath,
         severity: "SAFE",
       });
+      continue;
+    }
+
+    if (oldField.type !== newField.type) {
+      changes.push({
+        change_type: "TYPE_CHANGE",
+        field: fullPath,
+        severity: "BREAKING",
+      });
+    }
+
+    if (oldField.type === "object" && newField.type === "object") {
+      changes.push(
+        ...compareSchemas(oldField, newField, fullPath)
+      );
+    }
+
+    if (oldField.type === "array" && newField.type === "array") {
+      if (oldField.items?.children && newField.items?.children) {
+        changes.push(
+          ...compareSchemas(
+            { children: oldField.items.children },
+            { children: newField.items.children },
+            fullPath
+          )
+        );
+      }
     }
   }
 

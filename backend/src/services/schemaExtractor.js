@@ -4,52 +4,8 @@ function getType(value) {
   return typeof value;
 }
 
-function mergeObjectSchemas(schemas) {
-  const merged = {};
-
-  const allKeys = new Set();
-
-  schemas.forEach((schema) => {
-    Object.keys(schema).forEach((key) => allKeys.add(key));
-  });
-
-  allKeys.forEach((key) => {
-    const values = schemas
-      .map((s) => s[key])
-      .filter(Boolean);
-
-    if (values.length === 0) return;
-
-    const types = new Set(values.map((v) => v.type));
-
-    const base = values[0];
-
-    merged[key] = {
-      type: types.size === 1 ? base.type : "any",
-      required: values.length === schemas.length,
-    };
-
-    if (base.type === "object") {
-      merged[key] = mergeObjectSchemas(
-        values.map((v) => v.children || {})
-      );
-    }
-
-    if (base.type === "array") {
-      merged[key] = {
-        type: "array",
-        items: mergeObjectSchemas(
-          values.map((v) => v.items || {})
-        ),
-        required: values.length === schemas.length,
-      };
-    }
-  });
-
-  return merged;
-}
-
 function extractSchema(data) {
+
   if (typeof data !== "object" || data === null) {
     return {
       type: getType(data),
@@ -67,39 +23,146 @@ function extractSchema(data) {
     }
 
     const itemSchemas = data.map((item) => extractSchema(item));
+    const types = new Set(itemSchemas.map((s) => s.type));
 
-    let mergedItems;
-
-    if (typeof itemSchemas[0] !== "object" || itemSchemas[0].type !== "object") {
-      const types = new Set(itemSchemas.map((s) => s.type));
-
-      mergedItems = {
-        type: types.size === 1 ? itemSchemas[0].type : "any",
+    if (types.size > 1) {
+      return {
+        type: "array",
+        items: { type: "any" },
+        required: true,
       };
-    } else {
-    
-      mergedItems = mergeObjectSchemas(itemSchemas);
     }
+
+    const firstType = itemSchemas[0].type;
+
+    if (firstType !== "object") {
+      return {
+        type: "array",
+        items: { type: firstType },
+        required: true,
+      };
+    }
+
+    const mergedItems = mergeObjectSchemas(
+      itemSchemas.map((s) => s.children || {})
+    );
 
     return {
       type: "array",
-      items: mergedItems,
+      items: {
+        type: "object",
+        children: mergedItems,
+      },
       required: true,
     };
   }
 
-  const schema = {};
+  const children = {};
 
   for (const key in data) {
     const extracted = extractSchema(data[key]);
 
-    schema[key] = {
-      ...extracted,
-      required: true,
-    };
+    if (extracted.type === "object") {
+      children[key] = {
+        type: "object",
+        children: extracted.children,
+        required: true,
+      };
+    } else if (extracted.type === "array") {
+      children[key] = {
+        type: "array",
+        items: extracted.items,
+        required: true,
+      };
+    } else {
+      children[key] = {
+        type: extracted.type,
+        required: true,
+      };
+    }
   }
 
-  return schema;
+  return {
+    type: "object",
+    children,
+    required: true,
+  };
+}
+
+function mergeObjectSchemas(schemas) {
+  const merged = {};
+  const allKeys = new Set();
+
+  schemas.forEach((schema) => {
+    Object.keys(schema || {}).forEach((key) => allKeys.add(key));
+  });
+
+  allKeys.forEach((key) => {
+    const values = schemas.map((s) => s[key]).filter(Boolean);
+
+    if (values.length === 0) return;
+
+    const types = new Set(values.map((v) => v.type));
+    const base = values[0];
+
+    if (base.type !== "object" && base.type !== "array") {
+      merged[key] = {
+        type: types.size === 1 ? base.type : "any",
+        required: values.length === schemas.length,
+      };
+      return;
+    }
+
+    if (base.type === "object") {
+      merged[key] = {
+        type: "object",
+        children: mergeObjectSchemas(
+          values.map((v) => v.children || {})
+        ),
+        required: values.length === schemas.length,
+      };
+      return;
+    }
+
+    if (base.type === "array") {
+      const itemTypes = new Set(
+        values.map((v) => v.items?.type || "any")
+      );
+
+      if (itemTypes.size > 1) {
+        merged[key] = {
+          type: "array",
+          items: { type: "any" },
+          required: values.length === schemas.length,
+        };
+        return;
+      }
+
+      if (base.items?.children) {
+        merged[key] = {
+          type: "array",
+          items: {
+            type: "object",
+            children: mergeObjectSchemas(
+              values.map((v) => v.items?.children || {})
+            ),
+          },
+          required: values.length === schemas.length,
+        };
+        return;
+      }
+
+      merged[key] = {
+        type: "array",
+        items: {
+          type: base.items?.type || "any",
+        },
+        required: values.length === schemas.length,
+      };
+    }
+  });
+
+  return merged;
 }
 
 module.exports = { extractSchema };

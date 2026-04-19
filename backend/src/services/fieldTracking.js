@@ -6,13 +6,19 @@ async function trackFieldUsage(endpoint, method, data, userId, projectId) {
 
     function extract(obj, prefix = "") {
       if (!obj || typeof obj !== "object") return;
-
+      
       for (const key in obj) {
+        const value = obj[key];
         const path = prefix ? `${prefix}.${key}` : key;
-        fields.push(path);
-
-        if (typeof obj[key] === "object") {
-          extract(obj[key], path);
+        
+        if (
+          typeof value === "object" &&
+          value !== null &&
+          !Array.isArray(value)
+        ) {
+          extract(value, path);
+        } else {
+          fields.push(path);
         }
       }
     }

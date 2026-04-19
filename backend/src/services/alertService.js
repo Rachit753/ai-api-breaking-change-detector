@@ -1,15 +1,11 @@
-const { createOrUpdateAlert } = require("../models/alertModel");
+const supabase = require("../config/db");
 const { calculateFieldImpact } = require("./impactAnalysis");
 
 function getSeverity(changeType) {
   switch (changeType) {
     case "REMOVED_FIELD":
-    case "TYPE_CHANGED":
-    case "OPTIONAL_TO_REQUIRED":
+    case "TYPE_CHANGE":
       return "BREAKING";
-
-    case "REQUIRED_TO_OPTIONAL":
-      return "RISKY";
 
     case "NEW_FIELD":
       return "SAFE";
@@ -20,10 +16,15 @@ function getSeverity(changeType) {
 }
 
 async function storeAlerts(endpoint, method, changes, userId, projectId) {
-  const storedAlerts = [];
-
   for (const change of changes) {
-    const field = change.field;
+    const { field, change_type } = change;
+
+    let severity = getSeverity(change_type);
+
+    if (change_type === "NEW_FIELD") {
+      severity = "SAFE";
+      change.severity = "SAFE"; 
+    }
 
     const impact = await calculateFieldImpact(
       endpoint,
@@ -33,27 +34,41 @@ async function storeAlerts(endpoint, method, changes, userId, projectId) {
       projectId
     );
 
-    const severity = getSeverity(change.type);
+    const { data: existing } = await supabase
+      .from("alerts")
+      .select("*")
+      .eq("endpoint", endpoint)
+      .eq("method", method)
+      .eq("field", field)
+      .eq("user_id", userId)
+      .eq("project_id", projectId)
+      .maybeSingle();
 
-    const alert = await createOrUpdateAlert({
-      endpoint,
-      method,
-      change_type: change.type,
-      field,
-      severity,
-      user_id: userId,
-      project_id: projectId,
-    });
-
-    if (alert) {
-      storedAlerts.push({
-        ...alert,
-        impact,
-      });
+    if (existing) {
+      
+      await supabase
+        .from("alerts")
+        .update({
+          occurrence_count: (existing.occurrence_count || 1) + 1,
+          severity,
+        })
+        .eq("id", existing.id);
+    } else {
+      
+      await supabase.from("alerts").insert([
+        {
+          endpoint,
+          method,
+          field,
+          change_type,
+          severity,
+          occurrence_count: 1,
+          user_id: userId,
+          project_id: projectId,
+        },
+      ]);
     }
   }
-
-  return storedAlerts;
 }
 
 module.exports = { storeAlerts };

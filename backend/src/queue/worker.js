@@ -84,10 +84,37 @@ const worker = new Worker(
         return;
       }
 
-      const changes = compareSchemas(
-        latest.schema_json,
-        cleanedSchema
+      const requestChanges = compareSchemas(
+        latest.schema_json.request,
+        cleanedSchema.request,
+        "request"
       );
+
+      const responseChanges = compareSchemas(
+        latest.schema_json.response,
+        cleanedSchema.response,
+        "response"
+      );
+
+      const map = new Map();
+      
+      for (const c of [...requestChanges, ...responseChanges]) {
+        const normalizedField = c.field
+        .replace("request.", "")
+          .replace("response.", "");
+        
+        const key = `${normalizedField}-${c.change_type}`;
+
+        if (!map.has(key)) {
+          map.set(key, {
+            change_type: c.change_type,
+            field: normalizedField,
+            severity: c.severity,
+          });
+        }
+      }
+      
+      const changes = Array.from(map.values());
 
       console.log("CHANGES:", changes);
 

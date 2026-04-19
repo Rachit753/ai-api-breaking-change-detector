@@ -1,12 +1,20 @@
-function errorHandler(err, req, res, next) {
-  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
-    return res.status(400).json({
-      error: "Invalid JSON format in request body",
-    });
-  }
+const { logError } = require("../services/errorLogger");
 
-  console.error(err);
-  res.status(500).json({ error: "Internal Server Error" });
+function errorHandler(err, req, res, next) {
+  console.error("ERROR:", err.message);
+
+  logError({
+    message: err.message,
+    stack: err.stack,
+    route: req.originalUrl,
+    method: req.method,
+    userId: req.user?.userId,
+    projectId: req.headers["x-project-id"],
+  });
+
+  res.status(500).json({
+    error: "Internal Server Error",
+  });
 }
 
 module.exports = errorHandler;
