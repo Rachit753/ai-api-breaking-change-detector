@@ -1,0 +1,17 @@
+{
+  "name": "guardai-monitor",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.3",
+    "bullmq": "^5.74.1",
+    "ioredis": "^5.10.1"
+  },
+  "keywords": [
+    "api-monitoring",
+    "breaking-changes",
+    "observability"
+  ],
+  "license": "MIT"
+}

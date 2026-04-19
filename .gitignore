@@ -7,6 +7,7 @@ dashboard/node_modules/
 .env
 backend/.env
 dashboard/.env
+.env.*
 
 # Build folders
 dist/
@@ -27,3 +28,19 @@ Thumbs.db
 # Editor folders
 .vscode/
 .idea/
+
+# Redis dump
+*.rdb
+
+# test app
+test-app/
+
+# coverage
+coverage/
+
+# temp
+tmp/
+temp/
+
+# script
+scripts/
