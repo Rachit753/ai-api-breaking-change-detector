@@ -1,176 +1,154 @@
-# GuardAI — AI-Based API Breaking Change Detection System
-
-GuardAI is an **AI-assisted backend observability tool** that automatically learns real API request/response schemas from live traffic, detects **breaking or risky API changes**, and alerts developers **before clients fail in production**.
-
-It acts as a **safety guard for backend APIs**, preventing silent production breakages caused by unintended schema changes.
+# GuardAI — API Breaking Change Detection & Monitoring Platform
 
 ---
 
-## The Problem
+## Introduction
 
-In real production systems:
+Modern applications depend heavily on APIs. Even small changes in request/response structures can silently break clients, leading to production issues that are hard to detect.
 
-* APIs change frequently
-* Developers may accidentally:
-
-  * remove fields
-  * rename fields
-  * change data types
-  * modify nested structures
-* Frontend, mobile apps, or other services **break silently**
-* Bugs are discovered **only after user complaints**
-
-Traditional solutions fail because:
-
-* Documentation becomes outdated
-* Schema validation is skipped
-* Breaking changes are detected **too late**
+GuardAI is a full-stack platform designed to monitor API behavior in real-time, detect breaking changes automatically, and provide actionable insights through a modern dashboard.
 
 ---
 
-## The GuardAI Solution
+## Problem Statement
 
-GuardAI provides **automatic API contract intelligence**:
+Developers face several challenges when working with evolving APIs:
 
-* Learns API schemas directly from **live traffic**
-* Maintains **versioned contracts per endpoint**
-* Detects **breaking, risky, and safe changes**
-* Stores **alerts with severity classification**
-* Estimates the **traffic impact percentage**
-* Displays insights in a **developer dashboard**
-
-All of this works **without manual schema definitions**.
+- No visibility into real-world API usage
+- Breaking changes go unnoticed until clients fail
+- Difficult to track schema evolution over time
+- Lack of tools to measure impact of API changes
+- Manual debugging of API issues is slow and inefficient
 
 ---
 
-## Architecture Overview
+## Solution
 
-### Core System Components
+GuardAI solves these problems by:
 
-#### 1. Traffic Capture Middleware
-
-* Intercepts request/response structures
-* Stores **only schema**, never sensitive values
-* Sends data to background processing logic
-
-#### 2. Contract Inference Engine
-
-* Detects:
-
-  * required vs optional fields
-  * data types
-  * nested structures
-* Builds a **baseline contract per endpoint**
-
-#### 3. Contract Versioning System
-
-* Maintains a **history of schema versions**
-* Enables **old vs new contract comparison**
-
-#### 4. Change Detection Engine
-
-Classifies schema changes into:
-
-* **BREAKING** → required field removed / type mismatch
-* **RISKY** → structure or loosened type change
-* **SAFE** → optional field added
-
-#### 5. Alerting System
-
-* Stores alerts in PostgreSQL
-* Shows:
-
-  * change type
-  * affected field
-  * severity
-  * timestamp
-
-#### 6. Impact Analysis
-
-* Estimates the **percentage of recent traffic affected**
-* Helps teams **prevent bad deployments**
-
-#### 7. Developer Dashboard (React)
-
-Provides:
-
-* Endpoint explorer
-* Contract history viewer
-* Alerts timeline with severity badges
-* Impact warning banner
+- Capturing live API traffic (requests & responses)
+- Automatically generating and versioning API schemas
+- Detecting breaking changes between versions
+- Storing structured logs for analysis
+- Providing a visual dashboard with insights and alerts
 
 ---
 
-## Tech Stack
+## Key Features
 
-### Backend
+### API Traffic Monitoring
+- Capture request & response payloads
+- Store logs in database
+- Track endpoint usage
 
-* Node.js
-* Express
-* PostgreSQL
+### Schema Tracking
+- Automatic schema extraction
+- Versioned API contracts
+- Schema comparison across requests
 
-### Frontend
+### Breaking Change Detection
+- Detect:
+  - Removed fields
+  - Type changes
+  - New fields
+- Classify severity:
+  - BREAKING
+  - SAFE
 
-* React
+### Analytics Dashboard
+- Traffic trends
+- Alert trends
+- Severity distribution
+- Top endpoints
+- Field usage insights
 
-### Planned Enhancements
+### AI Insights & Recommendations
+- Detect unstable endpoints
+- Highlight risky patterns
+- Suggest improvements
 
-* Redis for caching
-* BullMQ for background processing
-* npm package distribution
-* Cloud-hosted SaaS dashboard
+### API Simulator
+- Test endpoints directly
+- Trigger schema changes intentionally
+
+### Background Processing
+- Queue-based processing using Redis + BullMQ
+- Async schema comparison
+
+---
+
+## Architecture
+
+```
+Client App → GuardAI Middleware → Supabase (Logs)
+                                → Redis Queue
+                                      ↓
+                                Worker (Schema Processing)
+                                      ↓
+                         Contracts + Alerts + Analytics
+                                      ↓
+                              React Dashboard
+```
 
 ---
 
 ## Project Structure
 
 ```
-ai-api-breaking-change-detector/
-│
-├── backend/        # GuardAI monitoring engine
-├── dashboard/      # React developer dashboard
-└── guardai-monitor/ # (Planned) npm package version
+.
+├── backend/              # API server (auth + analytics + endpoints)
+├── dashboard/            # React frontend (UI)
+├── guardai-monitor/      # NPM package (monitoring + worker)
+├── test-app/             # Local testing app
+├── assets/                 # Screenshots
+├── package.json
+└── README.md
 ```
 
 ---
 
-## Local Setup Guide
+## Application Screenshots
 
-### 1. Clone the Repository
+| Login Page | Dashboard Page |
+|----------------|-------------------|
+| ![](./assets/login.png) | ![](./assets/endpoint.png) |
+
+| Analytics Page | Logs Page |
+|------------------|-------------------|
+| ![](./assets/analytics.png) | ![](./assets/logs.png) |
+---
+
+## Tech Stack
+
+### Backend
+- Node.js
+- Express
+- Supabase (PostgreSQL)
+- BullMQ + Redis
+
+### Frontend
+- React
+- Axios
+- Recharts
+
+### Infrastructure
+- Redis (queue processing)
+- Supabase (database)
+
+---
+
+## Getting Started
+
+### Clone Repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Rachit753/ai-api-breaking-change-detector.git
 cd ai-api-breaking-change-detector
 ```
 
 ---
 
-### 2. Create PostgreSQL Database
-
-```sql
-CREATE DATABASE guard_ai;
-```
-
-Create the required tables (contracts, alerts, request_logs) using the provided schema in the project.
-
----
-
-### 3. Configure Backend Environment
-
-Create a `.env` file inside **backend/**:
-
-```
-PORT=5000
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=yourpassword
-DB_NAME=guard_ai
-```
-
----
-
-### 4. Start Backend Server
+### Setup Backend
 
 ```bash
 cd backend
@@ -178,16 +156,17 @@ npm install
 npm run dev
 ```
 
-Expected output:
+Create `.env`:
 
-```
-Server running on port 5000
-PostgreSQL connected
+```env
+SUPABASE_URL=your_url
+SUPABASE_KEY=your_key
+JWT_SECRET=your_secret
 ```
 
 ---
 
-### 5. Start React Dashboard
+### Setup Dashboard
 
 ```bash
 cd dashboard
@@ -195,89 +174,116 @@ npm install
 npm start
 ```
 
-Open in browser:
+Create `.env`:
 
-```
-http://localhost:3000
+```env
+REACT_APP_API_URL=http://localhost:5000/api
 ```
 
 ---
 
-## Example: Breaking Change Detection
+### Start Redis
 
-### Original API Response
-
-```json
-{ "id": 1, "name": "Ram", "email": "a@mail.com" }
+```bash
+redis-server
 ```
-
-### After Accidental Change
-
-```json
-{ "id": 1, "name": "Ram" }
-```
-
-### GuardAI Automatically Detects
-
-* **REMOVED_FIELD → BREAKING**
-* Stores alert in the database
-* Displays a warning in the dashboard
-* Estimates **traffic impact %**
-
-➡ Developers can fix the issue **before users are affected**.
 
 ---
 
-## Real-World Integration
+### Start Worker
 
-GuardAI can be integrated into any **Express backend** as middleware:
+```bash
+cd guardai-monitor
 
-```js
-app.use(trafficCapture);
+# PowerShell
+$env:SUPABASE_URL="your_url"
+$env:SUPABASE_KEY="your_key"
+
+node runWorker.js
 ```
 
-Once enabled, it provides:
+---
 
-* automatic API contract monitoring
-* early breaking-change detection
-* safer production deployments
+### Run Test App (Optional)
+
+```bash
+cd test-app
+npm install
+node index.js
+```
 
 ---
 
-## Learning Outcomes
+## How It Works
 
-This project demonstrates:
-
-* real backend system design
-* observability engineering principles
-* API lifecycle management
-* intelligent automation without heavy ML
-* full-stack integration with a monitoring dashboard
+1. Middleware captures API traffic  
+2. Logs stored in Supabase  
+3. Job pushed to Redis queue  
+4. Worker processes:
+   - Extract schema
+   - Compare with previous version
+   - Detect changes  
+5. Contracts & alerts stored  
+6. Dashboard visualizes data  
 
 ---
 
-## Future Roadmap
+## Example Scenario
 
-* Publish GuardAI as an **npm package**
-* Add **Redis caching** and **BullMQ workers**
-* Support **multi-service monitoring**
-* Build a **cloud-hosted SaaS observability platform**
+If a field is removed from API response:
+
+```
+REMOVED_FIELD → BREAKING
+```
+
+GuardAI will:
+- Detect the change
+- Store a new contract version
+- Generate an alert
+- Show impact on dashboard
+
+---
+
+## Current Limitations
+
+- Redis is required (no fallback yet)
+- Basic rate limiting handling
+- Limited multi-tenant support
+
+---
+
+## Future Improvements
+
+- Real-time updates (WebSockets)
+- Advanced alert deduplication
+- CI/CD integration
+- OpenAPI export
+- Team collaboration features
+
+---
+
+## NPM Package
+
+Core monitoring system is available separately:
+
+```
+guardai-monitor/
+```
 
 ---
 
 ## Author
 
-**Rachit**
-Computer Science Student
-Interested in **backend engineering, observability, and developer infrastructure tools**.
+Rachit Chauhan
 
 ---
 
-## Support the Project
+## Why GuardAI?
 
-If you find GuardAI useful:
+Most tools monitor uptime.
 
-* Give the repository a **star ⭐**
-* Share feedback or improvements
+GuardAI monitors **API correctness**.
 
-It really helps!
+That’s the difference between:
+- "Server is up"   
+- "API won’t break your frontend" 
