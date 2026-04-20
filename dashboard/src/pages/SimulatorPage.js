@@ -69,7 +69,9 @@ function SimulatorPage() {
       {response && (
         <div className="card">
           <h3>Response</h3>
-          <pre>{JSON.stringify(response, null, 2)}</pre>
+          <pre className="code-block">
+            {JSON.stringify(response, null, 2)}
+          </pre>
         </div>
       )}
     </div>

@@ -5,10 +5,8 @@ import BASE_URL from "../api/config";
 
 function LoginPage({ onLogin }) {
   const [isSignup, setIsSignup] = useState(false);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -22,7 +20,6 @@ function LoginPage({ onLogin }) {
           email,
           password,
         });
-
         setMessage("Signup successful! Please login.");
         setIsSignup(false);
       } else {
@@ -35,57 +32,56 @@ function LoginPage({ onLogin }) {
         onLogin();
       }
     } catch (err) {
-      console.error(err);
-      setError("Invalid credentials or error occurred");
+      setError("Invalid credentials");
     }
   }
 
   return (
-    <div style={{ padding: 40, maxWidth: 400, margin: "auto" }}>
-      <h2>{isSignup ? "Signup" : "Login"}</h2>
+    <div className="auth-container">
+      <div className="card auth-card">
+        <h2>{isSignup ? "Create Account" : "Welcome Back"}</h2>
 
-      {message && <p style={{ color: "#10b981" }}>{message}</p>}
-      {error && <p style={{ color: "#ef4444" }}>{error}</p>}
+        {message && <p className="success">{message}</p>}
+        {error && <p className="error">{error}</p>}
 
-      <input
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        style={{ width: "100%", marginBottom: 10 }}
-      />
+        <div className="auth-form">
+          <input
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={{ width: "100%", marginBottom: 10 }}
-      />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-      <button onClick={handleSubmit} style={{ width: "100%" }}>
-        {isSignup ? "Signup" : "Login"}
-      </button>
+          <button onClick={handleSubmit} className="primary-btn">
+            {isSignup ? "Create Account" : "Login"}
+          </button>
+        </div>
 
-      <p style={{ marginTop: 15, textAlign: "center" }}>
-        {isSignup ? "Already have an account?" : "Don't have an account?"}
-      </p>
+        <div className="auth-footer">
+          <p>
+            {isSignup
+              ? "Already have an account?"
+              : "Don't have an account?"}
+          </p>
 
-      <button
-        onClick={() => {
-          setIsSignup(!isSignup);
-          setMessage("");
-          setError("");
-        }}
-        style={{
-          width: "100%",
-          background: "#eee",
-          border: "none",
-          padding: 8,
-          cursor: "pointer",
-        }}
-      >
-        {isSignup ? "Go to Login" : "Sign up"}
-      </button>
+          <button
+            className="secondary-btn"
+            onClick={() => {
+              setIsSignup(!isSignup);
+              setMessage("");
+              setError("");
+            }}
+          >
+            {isSignup ? "Login" : "Sign up"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

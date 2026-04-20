@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { fetchEndpoints } from "../api/endpoints";
 import { fetchContracts } from "../api/contracts";
 import { fetchAlerts } from "../api/alerts";
@@ -86,14 +87,16 @@ function EndpointsPage() {
         </select>
       </div>
 
-      {filteredEndpoints.map((ep, i) => (
-        <div
+      {filteredEndpoints.map((ep) => (
+        <motion.div
           key={`${ep.endpoint}-${ep.method}`}
           className="endpoint-item"
+          whileHover={{ x: 8, scale: 1.01 }}
+          transition={{ type: "spring", stiffness: 300 }}
           onClick={() => handleSelect(ep.endpoint, ep.method)}
         >
           {ep.method} — {ep.endpoint}
-        </div>
+        </motion.div>
       ))}
 
       {selected && (
@@ -111,32 +114,36 @@ function EndpointsPage() {
             </div>
           ))}
 
-          <h2>Alerts</h2>
+            <h2>Alerts</h2>
 
-          {impact !== null && (
-            <div className="impact">
-              ⚠ ~{impact}% traffic affected
-            </div>
-          )}
+            {impact !== null && (
+              <div className="impact-hero">
+                ⚠ ~{impact}% traffic affected
+              </div>
+            )}
 
-          {filteredAlerts.map((a) => (
-            <div
-              key={`${a.change_type}-${a.field}`}
-              className="card"
-            >
-              {a.change_type} — {a.field}
+            {filteredAlerts.length === 0 ? (
+              <p>No alerts found</p>
+            ) : (
+            filteredAlerts.map((a) => (
+                <div
+                  key={`${a.change_type}-${a.field}`}
+                  className={`alert-row ${a.severity.toLowerCase()}`}
+                >
+            <strong>{a.change_type}</strong> — {a.field}
 
-              <span className={`badge ${a.severity.toLowerCase()}`}>
-                {a.severity}
-              </span>
+            <span className={`badge ${a.severity.toLowerCase()}`}>
+            {a.severity}
+          </span>
 
-              {a.occurrence_count > 1 && (
-                <span style={{ marginLeft: 10 }}>
-                  ×{a.occurrence_count}
-                </span>
-              )}
-            </div>
-          ))}
+      {a.occurrence_count > 1 && (
+        <span style={{ marginLeft: 10 }}>
+          ×{a.occurrence_count}
+        </span>
+      )}
+    </div>
+  ))
+)}
         </>
       )}
     </div>

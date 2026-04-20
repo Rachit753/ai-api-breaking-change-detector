@@ -8,6 +8,7 @@ function ProjectSelector() {
   const [selected, setSelected] = useState(
     localStorage.getItem("projectId") || ""
   );
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     loadProjects();
@@ -23,32 +24,39 @@ function ProjectSelector() {
 
       setProjects(res.data);
     } catch (err) {
-      console.error("Failed to load projects", err);
+      console.error(err);
     }
   }
 
-  function handleChange(e) {
-    const projectId = e.target.value;
-
-    setSelected(projectId);
-
-    localStorage.setItem("projectId", projectId);
-
+  function handleSelect(id) {
+    setSelected(id);
+    localStorage.setItem("projectId", id);
     window.location.reload();
   }
 
-  return (
-    <div style={{ marginBottom: 15 }}>
-      <select value={selected} onChange={handleChange}>
-        <option value="">Select Project</option>
+  const selectedProject = projects.find(p => p.id === selected);
 
-        {projects.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+  return (
+    <div className="dropdown">
+  <div className="dropdown-trigger" onClick={() => setOpen(!open)}>
+    {selectedProject?.name || "Select Project"}
+    <span>▼</span>
+  </div>
+
+  {open && (
+    <div className="dropdown-menu">
+      {projects.map((p) => (
+        <div
+          key={p.id}
+          className="dropdown-item"
+          onClick={() => handleSelect(p.id)}
+        >
+          {p.name}
+        </div>
+      ))}
     </div>
+  )}
+</div>
   );
 }
 

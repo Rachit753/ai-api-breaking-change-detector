@@ -6,8 +6,12 @@ function ContractsPage({ endpoint, method }) {
 
   useEffect(() => {
     async function load() {
-      const data = await fetchContracts(endpoint, method);
-      setContracts(data);
+      try {
+        const data = await fetchContracts(endpoint, method);
+        setContracts(data || []);
+      } catch (err) {
+        console.error("Contracts error:", err);
+      }
     }
     load();
   }, [endpoint, method]);
@@ -16,14 +20,19 @@ function ContractsPage({ endpoint, method }) {
     <div className="card">
       <h3>Contracts</h3>
 
-      {contracts.map((c) => (
-        <div key={c.id}>
-          <strong>Version {c.version}</strong>
-          <pre className="code-block">
-            {JSON.stringify(c.schema_json, null, 2)}
-          </pre>
-        </div>
-      ))}
+      {contracts.length === 0 ? (
+        <p>No contracts found</p>
+      ) : (
+        contracts.map((c) => (
+          <div key={c.id} style={{ marginBottom: 20 }}>
+            <strong>Version {c.version}</strong>
+
+            <pre className="code-block">
+              {JSON.stringify(c.schema_json, null, 2)}
+            </pre>
+          </div>
+        ))
+      )}
     </div>
   );
 }

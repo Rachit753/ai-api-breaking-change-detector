@@ -5,13 +5,13 @@ import EndpointsPage from "./EndpointsPage";
 import AnalyticsPage from "./AnalyticsPage";
 import LogsPage from "./LogsPage";
 import SimulatorPage from "./SimulatorPage";
+import AnimatedPage from "../components/AnimatedPage";
 import { removeToken } from "../utils/auth";
 import DashboardStats from "../components/DashboardStats";
 import ProjectSelector from "../components/ProjectSelector";
 
 function Dashboard() {
   const [active, setActive] = useState("endpoints");
-
   const [totalEndpoints, setTotalEndpoints] = useState(0);
   const [totalAlerts, setTotalAlerts] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -27,16 +27,20 @@ function Dashboard() {
         const endpoints = await fetchEndpoints();
         setTotalEndpoints(endpoints.length);
 
-        let alertCount = 0;
+        const alertPromises = endpoints.map((ep) =>
+          fetchAlerts(ep.endpoint, ep.method)
+        );
 
-        for (const ep of endpoints) {
-          const data = await fetchAlerts(ep.endpoint, ep.method);
-          alertCount += data.alerts?.length || 0;
-        }
+        const alertResults = await Promise.all(alertPromises);
+
+        const alertCount = alertResults.reduce(
+          (sum, res) => sum + (res.alerts?.length || 0),
+          0
+        );
 
         setTotalAlerts(alertCount);
       } catch (err) {
-        console.error("Failed to load stats:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -51,28 +55,28 @@ function Dashboard() {
         <h2>GuardAI</h2>
 
         <div
-          className="nav-item"
+          className={`nav-item ${active === "endpoints" ? "active" : ""}`}
           onClick={() => setActive("endpoints")}
         >
           Endpoints
         </div>
 
         <div
-          className="nav-item"
+          className={`nav-item ${active === "analytics" ? "active" : ""}`}
           onClick={() => setActive("analytics")}
         >
           Analytics
         </div>
 
         <div
-          className="nav-item"
+          className={`nav-item ${active === "logs" ? "active" : ""}`}
           onClick={() => setActive("logs")}
         >
           Logs
         </div>
 
         <div
-          className="nav-item"
+          className={`nav-item ${active === "simulator" ? "active" : ""}`}
           onClick={() => setActive("simulator")}
         >
           Simulator
@@ -91,7 +95,10 @@ function Dashboard() {
         <ProjectSelector />
 
         {loading ? (
-          <p>Loading dashboard...</p>
+          <div>
+            <div className="skeleton" style={{ width: 200, marginBottom: 10 }} />
+            <div className="skeleton" style={{ width: 150 }} />
+          </div>
         ) : (
           <DashboardStats
             totalEndpoints={totalEndpoints}
@@ -99,10 +106,29 @@ function Dashboard() {
           />
         )}
 
-        {active === "endpoints" && <EndpointsPage />}
-        {active === "analytics" && <AnalyticsPage />}
-        {active === "logs" && <LogsPage />}
-        {active === "simulator" && <SimulatorPage />}
+        {active === "endpoints" && (
+          <AnimatedPage>
+            <EndpointsPage />
+          </AnimatedPage>
+        )}
+
+        {active === "analytics" && (
+          <AnimatedPage>
+            <AnalyticsPage />
+          </AnimatedPage>
+        )}
+
+        {active === "logs" && (
+          <AnimatedPage>
+            <LogsPage />
+          </AnimatedPage>
+        )}
+
+        {active === "simulator" && (
+          <AnimatedPage>
+            <SimulatorPage />
+          </AnimatedPage>
+        )}
       </div>
     </div>
   );

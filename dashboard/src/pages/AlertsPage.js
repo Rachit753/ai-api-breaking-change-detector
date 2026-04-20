@@ -7,9 +7,13 @@ function AlertsPage({ endpoint, method }) {
 
   useEffect(() => {
     async function load() {
-      const data = await fetchAlerts(endpoint, method);
-      setAlerts(data.alerts);
-      setImpact(data.impact);
+      try {
+        const data = await fetchAlerts(endpoint, method);
+        setAlerts(data.alerts || []);
+        setImpact(data.impact ?? null);
+      } catch (err) {
+        console.error("Alerts error:", err);
+      }
     }
     load();
   }, [endpoint, method]);
@@ -19,19 +23,33 @@ function AlertsPage({ endpoint, method }) {
       <h3>Alerts</h3>
 
       {impact !== null && (
-        <div className="impact">
+        <div className="impact-hero">
           ⚠ ~{impact}% traffic affected
         </div>
       )}
 
-      {alerts.map((a) => (
-        <div key={a.id}>
-          {a.change_type} — {a.field}
-          <span className={`badge ${a.severity.toLowerCase()}`}>
-            {a.severity}
-          </span>
-        </div>
-      ))}
+      {alerts.length === 0 ? (
+        <p>No alerts found</p>
+      ) : (
+        alerts.map((a) => (
+          <div
+            key={a.id}
+            className={`alert-row ${a.severity.toLowerCase()}`}
+          >
+            <strong>{a.change_type}</strong> — {a.field}
+
+            <span className={`badge ${a.severity.toLowerCase()}`}>
+              {a.severity}
+            </span>
+
+            {a.occurrence_count > 1 && (
+              <span style={{ marginLeft: 10 }}>
+                ×{a.occurrence_count}
+              </span>
+            )}
+          </div>
+        ))
+      )}
     </div>
   );
 }
